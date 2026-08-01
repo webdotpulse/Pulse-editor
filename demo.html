@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulse Editor Demo</title>
+    <link rel="stylesheet" href="editor.css">
+    <style>
+        body {
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f8f9fa;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin-bottom: 2rem;
+        }
+        form {
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pulse Editor Demo</h1>
+        <div class="editor-container">
+            <div id="toolbar"></div>
+            <div id="editor" class="editor-content-area"></div>
+            <textarea id="source"></textarea>
+        </div>
+        <form>
+            <button type="submit" style="margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer;">Submit Content</button>
+        </form>
+    </div>
+
+    <script src="editor.js"></script>
+    <script>
+        // Provide a dummy key or leave empty. In real use cases, user should provide their Gemini API Key.
+        // We initialize the editor when the DOM is fully loaded.
+        document.addEventListener('DOMContentLoaded', () => {
+            initializePulseEditor('toolbar', 'editor', 'source', 'YOUR_GEMINI_API_KEY');
+        });
+    </script>
+</body>
+</html>

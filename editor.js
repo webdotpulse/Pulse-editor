@@ -1,7 +1,7 @@
 // ---------------------------------------------------------
 // GEMINI API CONFIGURATIE
 // ---------------------------------------------------------
-const apiKey = window.geminiApiKey || "";
+const apiKey = (typeof window !== 'undefined' && window.geminiApiKey) ? window.geminiApiKey : "";
 
 // ---------------------------------------------------------
 // SVG ICOON ASSETS (Lucide stijl)
@@ -38,7 +38,7 @@ const ICONS = {
 // AANGEPASTE UI DIALOGEN
 // ---------------------------------------------------------
 function injectDialogs() {
-    if (!document.getElementById('message-dialog')) {
+    if (!document.getElementById('message-dialog') && !document.getElementById('input-dialog')) {
         const dialogHTML = `
             <!-- Herbruikbare Melding Dialoog -->
             <dialog id="message-dialog">
@@ -172,12 +172,12 @@ async function callGeminiAPI(promptText, configuredKey) {
 function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '') {
     injectDialogs();
 
-    const toolbar = document.getElementById(toolbarId);
+    const toolbar = typeof toolbarId === 'string' ? document.getElementById(toolbarId) : toolbarId;
     if (!toolbar) return;
     toolbar.classList.add('pulse-editor-toolbar');
 
-    const editor = document.getElementById(editorId);
-    const sourceView = document.getElementById(sourceId);
+    const editor = typeof editorId === 'string' ? document.getElementById(editorId) : editorId;
+    const sourceView = sourceId ? (typeof sourceId === 'string' ? document.getElementById(sourceId) : sourceId) : null;
     if (sourceView) {
         sourceView.classList.add('source-view');
     }
@@ -229,7 +229,8 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
         { svg: ICONS.color, command: 'foreColor', title: 'Tekstkleur', type: 'custom' },
         { divider: true },
         { svg: ICONS.undo, command: 'undo', title: 'Ongedaan maken', type: 'action' },
-        { svg: ICONS.code, command: 'toggleSource', title: 'Broncode bekijken', type: 'action' }
+        // Only include toggleSource if sourceView exists
+        ...(sourceView ? [{ svg: ICONS.code, command: 'toggleSource', title: 'Broncode bekijken', type: 'action' }] : [])
     ];
 
     const createButton = (config) => {
@@ -407,6 +408,7 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
     };
 
     const toggleSourceView = (button) => {
+        if (!sourceView) return;
         sourceMode = !sourceMode;
         button.classList.toggle('active', sourceMode);
         const buttons = toolbar.querySelectorAll('button');
@@ -449,10 +451,10 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
     toolbar.innerHTML = '';
     commands.forEach(cmd => toolbar.appendChild(createButton(cmd)));
 
-    if (sourceView.value) editor.innerHTML = sourceView.value;
+    if (sourceView && sourceView.value) editor.innerHTML = sourceView.value;
     else if (!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
 
-    const syncContent = () => { if (!sourceMode) sourceView.value = editor.innerHTML; };
+    const syncContent = () => { if (!sourceMode && sourceView) sourceView.value = editor.innerHTML; };
     editor.addEventListener('input', syncContent);
     document.addEventListener('selectionchange', () => {
         if (window.getSelection().rangeCount > 0 && editor.contains(window.getSelection().getRangeAt(0).commonAncestorContainer)) updateToolbarState();
@@ -461,4 +463,10 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
     editor.addEventListener('keyup', updateToolbarState);
     const form = editor.closest('form');
     if (form) form.addEventListener('submit', syncContent);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { initializePulseEditor };
+} else if (typeof window !== 'undefined') {
+    window.initializePulseEditor = initializePulseEditor;
 }
