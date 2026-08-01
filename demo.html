@@ -29,6 +29,17 @@
 <body>
     <div class="container">
         <h1>Pulse Editor Demo</h1>
+        <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
+            <select id="lang-select" style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ccc;">
+                <option value="">Rich Text Mode</option>
+                <option value="html">HTML</option>
+                <option value="css">CSS</option>
+                <option value="javascript">JavaScript</option>
+                <option value="json">JSON</option>
+                <option value="php">PHP</option>
+            </select>
+            <button id="search-btn" style="padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid #ccc; background: #fff; cursor: pointer;">Search (Ctrl+F)</button>
+        </div>
         <div class="editor-container">
             <div id="toolbar"></div>
             <div id="editor" class="editor-content-area"></div>

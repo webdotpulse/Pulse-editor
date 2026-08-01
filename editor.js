@@ -231,6 +231,104 @@ async function callGeminiAPI(promptText, configuredKey) {
 }
 
 // ---------------------------------------------------------
+// SYNTAX LEXER CONFIGURATIE
+// ---------------------------------------------------------
+const syntaxRules = {
+    javascript: [
+        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*'|`(?:\\`|[^`])*`)/g, class: 'string' },
+        { regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/g, class: 'comment' },
+        { regex: /\b(function|const|let|var|if|else|for|while|return|new|this|class|extends|import|export|await|async|try|catch|switch|case|default|break|continue)\b/g, class: 'keyword' },
+        { regex: /\b(\d+(?:\.\d+)?)\b/g, class: 'number' },
+        { regex: /([=+*\/%<>&|!?-]+)/g, class: 'operator' }
+    ],
+    css: [
+        { regex: /(\/\*[\s\S]*?\*\/)/g, class: 'comment' },
+        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' },
+        { regex: /(@(?:media|import|keyframes|font-face|supports)\b)/g, class: 'keyword' },
+        { regex: /([a-zA-Z-]+)(?=\s*:)/g, class: 'keyword' }, // Property names
+        { regex: /\b(\d+(?:px|em|rem|%|vh|vw|s|ms|deg)?)\b/g, class: 'number' },
+        { regex: /(#[0-9a-fA-F]{3,6}\b)/g, class: 'number' }, // Hex colors
+        { regex: /([{}()])/g, class: 'operator' }
+    ],
+    html: [
+        { regex: /(&lt;!--[\s\S]*?--&gt;)/g, class: 'comment' },
+        { regex: /(&lt;\/?[a-zA-Z0-9-]+)/g, class: 'tag' }, // Open tag start
+        { regex: /(&gt;)/g, class: 'tag' }, // Close tag end
+        { regex: /([a-zA-Z0-9-]+)=/g, class: 'attr' },
+        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' }
+    ],
+    php: [
+        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' },
+        { regex: /(\/\/.*|\/\*[\s\S]*?\*\/|#.*)/g, class: 'comment' },
+        { regex: /\b(echo|if|else|elseif|for|foreach|while|do|switch|case|default|break|continue|function|return|class|extends|implements|public|private|protected|static|new|require|include|require_once|include_once)\b/g, class: 'keyword' },
+        { regex: /(\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)/g, class: 'attr' }, // Variables
+        { regex: /\b(\d+(?:\.\d+)?)\b/g, class: 'number' },
+        { regex: /(&lt;\?php|\?&gt;)/gi, class: 'keyword' }
+    ],
+    json: [
+        { regex: /("(?:\\"|[^"])*")(?=\s*:)/g, class: 'attr' }, // Keys
+        { regex: /(?<=:\s*)("(?:\\"|[^"])*")/g, class: 'string' }, // Values (strings)
+        { regex: /\b(true|false|null)\b/g, class: 'keyword' },
+        { regex: /\b(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g, class: 'number' },
+        { regex: /([{}\[\]])/g, class: 'operator' }
+    ]
+};
+
+function tokenizeText(text, lang, searchQuery = '', useRegex = false) {
+    // 1. Escape HTML
+    let escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+    // 2. Syntax Highlighting
+    if (lang && syntaxRules[lang]) {
+        // We use a placeholder approach to avoid replacing within already injected HTML tags
+        const tokens = [];
+        const rules = syntaxRules[lang];
+
+        rules.forEach((rule, ruleIdx) => {
+            escaped = escaped.replace(rule.regex, (match, p1) => {
+                const id = `__TOKEN_${tokens.length}__`;
+                tokens.push(`<span class="token ${rule.class}">${p1 || match}</span>`);
+                return id;
+            });
+        });
+
+        // Restore tokens
+        for (let i = tokens.length - 1; i >= 0; i--) {
+            escaped = escaped.replace(`__TOKEN_${i}__`, tokens[i]);
+        }
+    }
+
+    // 3. Search Highlighting
+    if (searchQuery) {
+        try {
+            const flags = 'gi';
+            let regex;
+            if (useRegex) {
+                regex = new RegExp(`(${searchQuery})`, flags);
+            } else {
+                const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                regex = new RegExp(`(${escapedQuery})`, flags);
+            }
+
+            // To avoid matching inside our syntax span tags, we split by tags
+            const parts = escaped.split(/(<[^>]*>)/g);
+            for (let i = 0; i < parts.length; i++) {
+                if (!parts[i].startsWith('<')) {
+                    parts[i] = parts[i].replace(regex, '<mark class="search-match">$1</mark>');
+                }
+            }
+            escaped = parts.join('');
+        } catch (e) {
+            // Invalid regex, ignore
+        }
+    }
+
+    // 4. Wrap lines
+    const lines = escaped.split('\n');
+    return lines.map(line => `<div class="code-line">${line || '<br>'}</div>`).join('');
+}
+
+// ---------------------------------------------------------
 // EDITOR INITIALISATIE
 // ---------------------------------------------------------
 function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '') {
@@ -246,6 +344,48 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
         sourceView.classList.add('source-view');
     }
     let sourceMode = false;
+
+    // Code Editor State
+    let currentLang = '';
+    let searchQuery = '';
+    let useRegex = false;
+
+    // UI Structure for Code Mode
+    const editorContainer = editor.parentElement;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'editor-main-wrap';
+    editorContainer.insertBefore(wrapper, editor);
+
+    const gutter = document.createElement('div');
+    gutter.className = 'pulse-gutter';
+    gutter.id = 'pulse-gutter';
+    gutter.style.display = 'none';
+
+    wrapper.appendChild(gutter);
+    wrapper.appendChild(editor); // Move editor into wrapper
+
+    // Search Panel HTML
+    const searchPanelHTML = `
+        <div id="pulse-search-panel" class="pulse-search-panel" style="display: none;">
+            <div class="search-panel-row">
+                <input type="text" id="pulse-search-input" class="search-panel-input" placeholder="Search...">
+                <button id="pulse-search-prev" class="search-panel-btn">▲</button>
+                <button id="pulse-search-next" class="search-panel-btn">▼</button>
+                <button id="pulse-search-close" class="search-panel-close">×</button>
+            </div>
+            <div class="search-panel-row">
+                <input type="text" id="pulse-replace-input" class="search-panel-input" placeholder="Replace with...">
+                <button id="pulse-replace-btn" class="search-panel-btn">Replace</button>
+                <button id="pulse-replace-all-btn" class="search-panel-btn">All</button>
+            </div>
+            <div class="search-panel-row" style="font-size: 0.85em;">
+                <label><input type="checkbox" id="pulse-search-regex"> Use RegExp</label>
+                <span id="pulse-search-count" style="margin-left: auto; color: #6c757d;">0/0</span>
+            </div>
+        </div>
+    `;
+    editorContainer.insertAdjacentHTML('beforeend', searchPanelHTML);
+    const searchPanel = document.getElementById('pulse-search-panel');
 
     if (editor.getAttribute('contenteditable') !== 'true') {
         editor.setAttribute('contenteditable', 'true');
@@ -780,8 +920,150 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
     if (sourceView && sourceView.value) editor.innerHTML = sourceView.value;
     else if (!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
 
-    const syncContent = () => { if (!sourceMode && sourceView) sourceView.value = editor.innerHTML; };
+    // Helper to get caret offset in raw text
+    const getCaretOffset = (element) => {
+        let caretOffset = 0;
+        const sel = window.getSelection();
+        if (sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            const preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(element);
+            preCaretRange.setEnd(range.endContainer, range.endOffset);
+            caretOffset = preCaretRange.toString().length;
+        }
+        return caretOffset;
+    };
+
+    // Helper to set caret offset in raw text
+    const setCaretOffset = (element, offset) => {
+        const sel = window.getSelection();
+        const range = document.createRange();
+
+        let found = false;
+        let charCount = 0;
+
+        const treeWalker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
+
+        while (treeWalker.nextNode()) {
+            const node = treeWalker.currentNode;
+            const nextCharCount = charCount + node.length;
+
+            if (!found && offset >= charCount && offset <= nextCharCount) {
+                range.setStart(node, offset - charCount);
+                range.collapse(true);
+                found = true;
+                break;
+            }
+            charCount = nextCharCount;
+        }
+
+        if (!found) {
+            // Fallback to the end if offset exceeds length
+            range.selectNodeContents(element);
+            range.collapse(false);
+        }
+
+        sel.removeAllRanges();
+        sel.addRange(range);
+    };
+
+    const updateGutter = () => {
+        if (!currentLang) return;
+
+        let gutterHtml = '';
+        const children = editor.children; // the .code-line elements
+        for (let i = 0; i < children.length; i++) {
+            const lineEl = children[i];
+            const text = lineEl.innerText;
+            const h = lineEl.offsetHeight || 26; // approx 1.6em fallback
+
+            // simple folding logic based on brackets/tags opening but not immediately closing
+            let foldIcon = '';
+            // A more forgiving check for block starters
+            if (text.match(/[{[]/) || text.match(/<[a-zA-Z0-9-]+[^>]*>$/)) {
+                // If it's already folded
+                if (lineEl.nextElementSibling && lineEl.nextElementSibling.classList.contains('folded')) {
+                    foldIcon = '<span class="fold-icon">▶</span>';
+                } else {
+                    foldIcon = '<span class="fold-icon">▼</span>';
+                }
+            }
+
+            gutterHtml += `<div class="gutter-line" data-line="${i}" style="height: ${h}px">${i + 1}${foldIcon}</div>`;
+        }
+        gutter.innerHTML = gutterHtml;
+    };
+
+    gutter.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Don't lose focus from editor
+        if (e.target.classList.contains('fold-icon')) {
+            const lineNum = parseInt(e.target.parentElement.dataset.line);
+            const lines = editor.children;
+            const startLine = lines[lineNum];
+            const text = startLine.innerText;
+
+            let isFolding = e.target.innerText === '▼';
+            e.target.innerText = isFolding ? '▶' : '▼';
+
+            // Very basic matching to find the end block
+            let depth = 1;
+            let endIdx = lineNum;
+            const openRegex = /[{[<]/g;
+            const closeRegex = /[}\]>]/g;
+
+            for (let i = lineNum + 1; i < lines.length; i++) {
+                const lText = lines[i].innerText;
+                const opens = (lText.match(openRegex) || []).length;
+                const closes = (lText.match(closeRegex) || []).length;
+                depth += opens - closes;
+                if (depth <= 0) {
+                    endIdx = i;
+                    break;
+                }
+            }
+
+            for (let i = lineNum + 1; i < endIdx && i < lines.length; i++) {
+                if (isFolding) {
+                    lines[i].classList.add('folded');
+                } else {
+                    lines[i].classList.remove('folded');
+                }
+            }
+        }
+    });
+
+    const updateCodeView = () => {
+        if (!currentLang) return;
+        const offset = getCaretOffset(editor);
+        const rawText = editor.innerText;
+
+        editor.innerHTML = tokenizeText(rawText, currentLang, searchQuery, useRegex);
+
+        setCaretOffset(editor, offset);
+        updateGutter();
+    };
+
+    window.addEventListener('resize', () => {
+        if (currentLang) updateGutter();
+    });
+
+    const syncContent = () => {
+        if (!sourceMode && sourceView) {
+            // For code mode, we want the raw text content to be saved, not the complex highlighted DOM
+            sourceView.value = currentLang ? editor.innerText : editor.innerHTML;
+        }
+        if (currentLang) updateCodeView();
+    };
     editor.addEventListener('input', syncContent);
+
+    // Intercept Enter key in Code Mode to prevent standard p/div nesting issues
+    editor.addEventListener('keydown', (e) => {
+        if (currentLang && e.key === 'Enter') {
+            e.preventDefault();
+            document.execCommand('insertText', false, '\n');
+        }
+    });
+
     document.addEventListener('selectionchange', () => {
         if (window.getSelection().rangeCount > 0 && editor.contains(window.getSelection().getRangeAt(0).commonAncestorContainer)) updateToolbarState();
     });
@@ -789,6 +1071,138 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
     editor.addEventListener('keyup', updateToolbarState);
     const form = editor.closest('form');
     if (form) form.addEventListener('submit', syncContent);
+
+    // Bind Search Logic
+    const searchBtnToggle = document.getElementById('search-btn');
+    const searchInput = document.getElementById('pulse-search-input');
+    const regexCheck = document.getElementById('pulse-search-regex');
+    const prevBtn = document.getElementById('pulse-search-prev');
+    const nextBtn = document.getElementById('pulse-search-next');
+    const closeBtn = document.getElementById('pulse-search-close');
+    const replaceInput = document.getElementById('pulse-replace-input');
+    const replaceBtn = document.getElementById('pulse-replace-btn');
+    const replaceAllBtn = document.getElementById('pulse-replace-all-btn');
+    const searchCount = document.getElementById('pulse-search-count');
+
+    let currentMatchIndex = 0;
+
+    const updateSearchState = () => {
+        searchQuery = searchInput.value;
+        useRegex = regexCheck.checked;
+        if (currentLang) {
+            updateCodeView();
+        } else {
+            // In Rich Text Mode, doing a naive innerText replacement destroys HTML formatting.
+            // A full DOM walker is required for safe rich-text search highlighting, which is out of scope.
+            // For now, search in rich text mode will just visually scroll to matches using window.find if supported.
+            // Or we just don't highlight anything and return early to prevent data loss.
+            return;
+        }
+
+        const matches = editor.querySelectorAll('mark.search-match');
+        searchCount.innerText = matches.length > 0 ? `${currentMatchIndex + 1}/${matches.length}` : `0/0`;
+
+        matches.forEach(m => m.classList.remove('active'));
+        if (matches.length > 0) {
+            if (currentMatchIndex >= matches.length) currentMatchIndex = 0;
+            if (currentMatchIndex < 0) currentMatchIndex = matches.length - 1;
+            matches[currentMatchIndex].classList.add('active');
+            matches[currentMatchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            searchCount.innerText = `${currentMatchIndex + 1}/${matches.length}`;
+        }
+    };
+
+    if (searchBtnToggle) {
+        searchBtnToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            searchPanel.style.display = searchPanel.style.display === 'none' ? 'flex' : 'none';
+            if (searchPanel.style.display === 'flex') searchInput.focus();
+        });
+    }
+
+    searchInput.addEventListener('input', () => { currentMatchIndex = 0; updateSearchState(); });
+    regexCheck.addEventListener('change', () => { currentMatchIndex = 0; updateSearchState(); });
+
+    nextBtn.addEventListener('click', () => { currentMatchIndex++; updateSearchState(); });
+    prevBtn.addEventListener('click', () => { currentMatchIndex--; updateSearchState(); });
+    closeBtn.addEventListener('click', () => {
+        searchPanel.style.display = 'none';
+        searchQuery = '';
+        searchInput.value = '';
+        updateSearchState();
+    });
+
+    replaceBtn.addEventListener('click', () => {
+        if (!currentLang) return; // Prevent replace in rich text mode for safety
+        const matches = editor.querySelectorAll('mark.search-match');
+        if (matches.length > 0 && matches[currentMatchIndex]) {
+            matches[currentMatchIndex].innerText = replaceInput.value;
+            // update raw text underlying via code view refresh
+            const rawText = editor.innerText;
+            if (currentLang) {
+                editor.innerHTML = tokenizeText(rawText, currentLang, searchQuery, useRegex);
+            }
+            updateSearchState(); // re-eval
+        }
+    });
+
+    replaceAllBtn.addEventListener('click', () => {
+        if (!currentLang) return; // Prevent replace in rich text mode for safety
+        let rawText = editor.innerText;
+        if (!searchQuery) return;
+        try {
+            const flags = 'g';
+            let regex;
+            if (useRegex) {
+                regex = new RegExp(searchQuery, flags);
+            } else {
+                const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                regex = new RegExp(escapedQuery, flags);
+            }
+            rawText = rawText.replace(regex, replaceInput.value);
+
+            if (currentLang) {
+                editor.innerHTML = tokenizeText(rawText, currentLang, searchQuery, useRegex);
+            }
+            updateSearchState();
+        } catch(e) {}
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+            e.preventDefault();
+            searchPanel.style.display = 'flex';
+            searchInput.focus();
+            // Optional: load current selection into search box
+            const sel = window.getSelection().toString();
+            if (sel) {
+                searchInput.value = sel;
+                searchQuery = sel;
+                currentMatchIndex = 0;
+                updateSearchState();
+            }
+        }
+    });
+
+    // Bind Language Selection (if element exists)
+    const langSelect = document.getElementById('lang-select');
+    if (langSelect) {
+        langSelect.addEventListener('change', (e) => {
+            currentLang = e.target.value;
+            if (currentLang) {
+                editor.classList.add('code-mode-active');
+                gutter.style.display = 'block';
+                toolbar.style.display = 'none'; // Hide rich text tools in code mode
+                updateCodeView();
+            } else {
+                editor.classList.remove('code-mode-active');
+                gutter.style.display = 'none';
+                toolbar.style.display = '';
+                // basic reset to rich text
+                editor.innerHTML = '<p>' + editor.innerText.replace(/\n/g, '<br>') + '</p>';
+            }
+        });
+    }
 }
 
 if (typeof module !== 'undefined' && module.exports) {
