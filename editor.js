@@ -31,7 +31,11 @@ const ICONS = {
     image: wrapSvg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
     color: wrapSvg('<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>'),
     undo: wrapSvg('<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>'),
-    code: wrapSvg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>')
+    code: wrapSvg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'),
+    table: wrapSvg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="9" y2="21"/>'),
+    markdown: wrapSvg('<path d="M20.5 5h-17C2.12 5 1 6.12 1 7.5v9C1 17.88 2.12 19 3.5 19h17c1.38 0 2.5-1.12 2.5-2.5v-9C23 6.12 21.88 5 20.5 5zm-14.7 10h-2V9.87l-1.3 1.3-1.4-1.4 3.7-3.7 3.7 3.7-1.4 1.4-1.3-1.3V15zm8.4-1.3H16v-2h-2V9.5h-1.8v2.2h-2v2h2v1.3H12l3.1 3.1 3.1-3.1h-4z"/>'),
+    maximize: wrapSvg('<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>'),
+    minimize: wrapSvg('<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>')
 };
 
 // ---------------------------------------------------------
@@ -59,6 +63,19 @@ function injectDialogs() {
                     <input type="text" id="input-dialog-field" class="form-control" required>
                     <div class="dialog-actions">
                         <button type="button" class="btn btn-light" id="input-cancel-btn">Annuleren</button>
+                        <button type="submit" class="btn btn-primary">Verzenden</button>
+                    </div>
+                </form>
+            </dialog>
+
+            <!-- Herbruikbare Textarea Dialoog -->
+            <dialog id="textarea-dialog">
+                <form method="dialog" id="textarea-dialog-form">
+                    <div class="dialog-header" id="textarea-dialog-title">Invoer Vereist</div>
+                    <p id="textarea-dialog-hint" class="text-muted mb-2" style="font-size: 0.9em; display: none;"></p>
+                    <textarea id="textarea-dialog-field" class="form-control" required style="width: 100%; min-height: 150px;"></textarea>
+                    <div class="dialog-actions">
+                        <button type="button" class="btn btn-light" id="textarea-cancel-btn">Annuleren</button>
                         <button type="submit" class="btn btn-primary">Verzenden</button>
                     </div>
                 </form>
@@ -114,6 +131,53 @@ function askInput(title, placeholder, defaultValue = '', hint = '') {
             cleanup();
             dialog.close();
             resolve(input.value);
+        };
+
+        cancelBtn.addEventListener('click', onCancel);
+        form.addEventListener('submit', onSubmit);
+
+        dialog.showModal();
+    });
+}
+
+function askTextarea(title, placeholder, defaultValue = '', hint = '') {
+    injectDialogs();
+    return new Promise(resolve => {
+        const dialog = document.getElementById('textarea-dialog');
+        const textarea = document.getElementById('textarea-dialog-field');
+        const hintEl = document.getElementById('textarea-dialog-hint');
+
+        document.getElementById('textarea-dialog-title').innerText = title;
+        textarea.placeholder = placeholder;
+        textarea.value = defaultValue;
+
+        if (hint) {
+            hintEl.innerText = hint;
+            hintEl.style.display = 'block';
+        } else {
+            hintEl.style.display = 'none';
+        }
+
+        const cancelBtn = document.getElementById('textarea-cancel-btn');
+        const form = document.getElementById('textarea-dialog-form');
+
+        const cleanup = () => {
+            cancelBtn.removeEventListener('click', onCancel);
+            form.removeEventListener('submit', onSubmit);
+        };
+
+        const onCancel = (e) => {
+            e.preventDefault();
+            cleanup();
+            dialog.close();
+            resolve(null);
+        };
+
+        const onSubmit = (e) => {
+            e.preventDefault();
+            cleanup();
+            dialog.close();
+            resolve(textarea.value);
         };
 
         cancelBtn.addEventListener('click', onCancel);
@@ -203,6 +267,22 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
         },
         { divider: true },
 
+        // Groep 1.5: Tabellen
+        {
+            type: 'dropdown',
+            mainButton: { svg: ICONS.table, command: 'table-insert', title: 'Tabel Invoegen', type: 'custom' },
+            items: [
+                { svg: ICONS.table, text: 'Rij Boven Invoegen', command: 'table-insert-row-above', title: 'Rij Boven Invoegen', type: 'custom' },
+                { svg: ICONS.table, text: 'Rij Onder Invoegen', command: 'table-insert-row-below', title: 'Rij Onder Invoegen', type: 'custom' },
+                { svg: ICONS.table, text: 'Kolom Links Invoegen', command: 'table-insert-col-left', title: 'Kolom Links Invoegen', type: 'custom' },
+                { svg: ICONS.table, text: 'Kolom Rechts Invoegen', command: 'table-insert-col-right', title: 'Kolom Rechts Invoegen', type: 'custom' },
+                { svg: ICONS.table, text: 'Rij Verwijderen', command: 'table-delete-row', title: 'Rij Verwijderen', type: 'custom' },
+                { svg: ICONS.table, text: 'Kolom Verwijderen', command: 'table-delete-col', title: 'Kolom Verwijderen', type: 'custom' },
+                { svg: ICONS.table, text: 'Tabel Verwijderen', command: 'table-delete-table', title: 'Tabel Verwijderen', type: 'custom' },
+            ]
+        },
+        { divider: true },
+
         // Groep 2: Basis Opmaak
         { svg: ICONS.bold, command: 'bold', title: 'Vet', type: 'state' },
         { svg: ICONS.italic, command: 'italic', title: 'Cursief', type: 'state' },
@@ -234,6 +314,20 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
         { svg: ICONS.color, command: 'foreColor', title: 'Tekstkleur', type: 'custom' },
         { divider: true },
         { svg: ICONS.undo, command: 'undo', title: 'Ongedaan maken', type: 'action' },
+        { divider: true },
+
+        // Groep 7: Markdown
+        {
+            type: 'dropdown',
+            mainButton: { svg: ICONS.markdown, command: 'markdown-import', title: 'Importeer Markdown', type: 'custom' },
+            items: [
+                { svg: ICONS.markdown, text: 'Importeer Markdown', command: 'markdown-import', title: 'Importeer Markdown', type: 'custom' },
+                { svg: ICONS.markdown, text: 'Exporteer Markdown', command: 'markdown-export', title: 'Exporteer Markdown', type: 'custom' }
+            ]
+        },
+        { svg: ICONS.code, command: 'insertCodeBlock', title: 'Codeblok Invoegen', type: 'custom' },
+        { divider: true },
+        { svg: ICONS.maximize, command: 'toggleFullscreen', title: 'Volledig Scherm', type: 'action' },
         // Only include toggleSource if sourceView exists
         ...(sourceView ? [{ svg: ICONS.code, command: 'toggleSource', title: 'Broncode bekijken', type: 'action' }] : [])
     ];
@@ -359,6 +453,17 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
     const handleToolbarClick = async (button, config) => {
         const command = config.command;
 
+        if (command === 'toggleFullscreen') {
+            const container = editor.closest('.editor-container');
+            if (container) {
+                container.classList.toggle('fullscreen-mode');
+                const isFullscreen = container.classList.contains('fullscreen-mode');
+                button.innerHTML = isFullscreen ? ICONS.minimize : ICONS.maximize;
+                button.title = isFullscreen ? 'Sluiten Volledig Scherm' : 'Volledig Scherm';
+            }
+            return;
+        }
+
         if (command === 'toggleSource') {
             toggleSourceView(button);
             return;
@@ -447,6 +552,155 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
                 button.disabled = false;
                 updateToolbarState();
             }
+            return;
+        }
+
+        // Markdown Acties
+        if (command === 'markdown-import') {
+            const markdownText = await askTextarea('Importeer Markdown', 'Plak uw Markdown hier...', '');
+            if (markdownText) {
+                if (typeof marked === 'undefined') {
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                }
+                const html = marked.parse(markdownText);
+                editor.focus();
+                if (savedRange) { selection.removeAllRanges(); selection.addRange(savedRange); }
+                document.execCommand('insertHTML', false, html);
+                updateToolbarState();
+            }
+            return;
+        }
+
+        if (command === 'markdown-export') {
+            if (typeof TurndownService === 'undefined') {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://unpkg.com/turndown/dist/turndown.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+            const turndownService = new TurndownService();
+            const markdown = turndownService.turndown(editor.innerHTML);
+            await askTextarea('Exporteer Markdown', '', markdown, 'Kopieer de Markdown hieronder.');
+            return;
+        }
+
+        // Code Blokken Acties
+        if (command === 'insertCodeBlock') {
+            const lang = await askInput('Programmeertaal', 'bijv. javascript, python, html', 'javascript');
+            if (lang) {
+                const code = await askTextarea('Code Invoegen', 'Plak uw code hier...', '');
+                if (code) {
+                    if (typeof hljs === 'undefined') {
+                        await new Promise((resolve, reject) => {
+                            const link = document.createElement('link');
+                            link.rel = 'stylesheet';
+                            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css';
+                            document.head.appendChild(link);
+
+                            const script = document.createElement('script');
+                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js';
+                            script.onload = resolve;
+                            script.onerror = reject;
+                            document.head.appendChild(script);
+                        });
+                    }
+
+                    // Escape HTML om onbedoelde uitvoering in de DOM te voorkomen
+                    const escapeHtml = (text) => {
+                        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+                        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+                    };
+
+                    const safeCode = escapeHtml(code);
+                    const html = `<pre style="background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; margin-bottom: 1rem;"><code class="language-${lang}">${safeCode}</code></pre><p><br></p>`;
+                    editor.focus();
+                    if (savedRange) { selection.removeAllRanges(); selection.addRange(savedRange); }
+                    document.execCommand('insertHTML', false, html);
+
+                    // Laat Highlight.js het nieuwe blok verwerken
+                    document.querySelectorAll('pre code').forEach((block) => {
+                        hljs.highlightElement(block);
+                    });
+                }
+            }
+            updateToolbarState();
+            return;
+        }
+
+        // Tabel Acties
+        if (command.startsWith('table-')) {
+            editor.focus();
+            if (savedRange) {
+                selection.removeAllRanges();
+                selection.addRange(savedRange);
+            }
+
+            if (command === 'table-insert') {
+                const tableHtml = '<table class="pulse-table" border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 1rem;"><tbody><tr><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td></tr></tbody></table><p><br></p>';
+                document.execCommand('insertHTML', false, tableHtml);
+            } else {
+                let cell = null;
+                if (savedRange) {
+                    let node = savedRange.startContainer;
+                    if (node.nodeType === 3) node = node.parentNode;
+                    cell = node.closest('td, th');
+                }
+
+                if (!cell) {
+                    showMessage('Melding', 'Zet uw cursor in een tabel om deze actie uit te voeren.');
+                    return;
+                }
+
+                const row = cell.closest('tr');
+                const table = cell.closest('table');
+                const tbody = table.querySelector('tbody') || table;
+                const cellIndex = Array.from(row.children).indexOf(cell);
+                const rowIndex = Array.from(tbody.children).indexOf(row);
+
+                if (command === 'table-insert-row-above') {
+                    const newRow = tbody.insertRow(rowIndex);
+                    Array.from(row.children).forEach(() => {
+                        const newCell = newRow.insertCell();
+                        newCell.innerHTML = '<br>';
+                    });
+                } else if (command === 'table-insert-row-below') {
+                    const newRow = tbody.insertRow(rowIndex + 1);
+                    Array.from(row.children).forEach(() => {
+                        const newCell = newRow.insertCell();
+                        newCell.innerHTML = '<br>';
+                    });
+                } else if (command === 'table-insert-col-left') {
+                    Array.from(tbody.children).forEach(tr => {
+                        const newCell = tr.insertCell(cellIndex);
+                        newCell.innerHTML = '<br>';
+                    });
+                } else if (command === 'table-insert-col-right') {
+                    Array.from(tbody.children).forEach(tr => {
+                        const newCell = tr.insertCell(cellIndex + 1);
+                        newCell.innerHTML = '<br>';
+                    });
+                } else if (command === 'table-delete-row') {
+                    tbody.deleteRow(rowIndex);
+                } else if (command === 'table-delete-col') {
+                    Array.from(tbody.children).forEach(tr => {
+                        if (tr.children[cellIndex]) {
+                            tr.deleteCell(cellIndex);
+                        }
+                    });
+                } else if (command === 'table-delete-table') {
+                    table.remove();
+                }
+            }
+            updateToolbarState();
             return;
         }
 
