@@ -191,11 +191,16 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
     // Toolbar Configuratie
     const commands = [
         // Groep 1: AI Integratie (Aangepast & Presets)
-        { svg: ICONS.magic, command: 'ai-custom', title: 'Vraag AI (Aangepast)', type: 'custom', class: 'btn-magic' },
-        { svg: ICONS.grammar, text: 'Grammatica', command: 'ai-grammar', title: 'Grammatica corrigeren (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
-        { svg: ICONS.translate, text: 'Vertalen', command: 'ai-translate', title: 'Vertalen (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
-        { svg: ICONS.summarize, text: 'Samenvatten', command: 'ai-summarize', title: 'Samenvatten (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
-        { svg: ICONS.professional, text: 'Professioneel', command: 'ai-professional', title: 'Professionele Toon (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
+        {
+            type: 'dropdown',
+            mainButton: { svg: ICONS.magic, command: 'ai-custom', title: 'Vraag AI (Aangepast)', type: 'custom', class: 'btn-magic dropdown-main' },
+            items: [
+                { svg: ICONS.grammar, text: 'Grammatica', command: 'ai-grammar', title: 'Grammatica corrigeren (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
+                { svg: ICONS.translate, text: 'Vertalen', command: 'ai-translate', title: 'Vertalen (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
+                { svg: ICONS.summarize, text: 'Samenvatten', command: 'ai-summarize', title: 'Samenvatten (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
+                { svg: ICONS.professional, text: 'Professioneel', command: 'ai-professional', title: 'Professionele Toon (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
+            ]
+        },
         { divider: true },
 
         // Groep 2: Basis Opmaak
@@ -238,6 +243,73 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
             const divider = document.createElement('span');
             divider.className = 'toolbar-divider';
             return divider;
+        }
+
+        if (config.type === 'dropdown') {
+            const dropdownContainer = document.createElement('div');
+            dropdownContainer.className = 'pulse-editor-dropdown';
+
+            const buttonGroup = document.createElement('div');
+            buttonGroup.className = 'pulse-editor-dropdown-group';
+
+            const mainBtnConfig = config.mainButton;
+            const mainButton = document.createElement('button');
+            mainButton.type = 'button';
+            mainButton.className = mainBtnConfig.class ? `btn ${mainBtnConfig.class}` : 'btn btn-light';
+            mainButton.title = mainBtnConfig.title;
+            mainButton.dataset.command = mainBtnConfig.command;
+
+            let mainInnerContent = mainBtnConfig.svg;
+            if (mainBtnConfig.text) mainInnerContent += `<span>${mainBtnConfig.text}</span>`;
+            mainButton.innerHTML = mainInnerContent;
+
+            mainButton.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                handleToolbarClick(mainButton, mainBtnConfig);
+            });
+
+            const toggleButton = document.createElement('button');
+            toggleButton.type = 'button';
+            toggleButton.className = 'btn btn-dropdown-toggle';
+            toggleButton.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+
+            const dropdownContent = document.createElement('div');
+            dropdownContent.className = 'pulse-editor-dropdown-content';
+
+            config.items.forEach(itemConfig => {
+                const itemBtn = document.createElement('button');
+                itemBtn.type = 'button';
+                itemBtn.className = itemConfig.class ? `btn ${itemConfig.class}` : 'btn btn-light';
+                itemBtn.title = itemConfig.title;
+                itemBtn.dataset.command = itemConfig.command;
+
+                let itemInnerContent = itemConfig.svg;
+                if (itemConfig.text) itemInnerContent += `<span>${itemConfig.text}</span>`;
+                itemBtn.innerHTML = itemInnerContent;
+
+                itemBtn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    handleToolbarClick(itemBtn, itemConfig);
+                    dropdownContent.classList.remove('show');
+                });
+                dropdownContent.appendChild(itemBtn);
+            });
+
+            toggleButton.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdownContent.classList.toggle('show');
+            });
+
+            document.addEventListener('click', () => {
+                dropdownContent.classList.remove('show');
+            });
+
+            buttonGroup.appendChild(mainButton);
+            buttonGroup.appendChild(toggleButton);
+            dropdownContainer.appendChild(buttonGroup);
+            dropdownContainer.appendChild(dropdownContent);
+
+            return dropdownContainer;
         }
 
         const button = document.createElement('button');
