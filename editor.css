@@ -1,0 +1,136 @@
+/* --- Algemene Lay-out --- */
+.editor-container {
+    position: relative;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+.pulse-editor-toolbar {
+    background-color: #f1f3f5;
+    padding: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+    border-top-left-radius: 0.5rem;
+    border-top-right-radius: 0.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+/* --- Toolbar Knoppen --- */
+.pulse-editor-toolbar .btn {
+    border: none;
+    padding: 0.375rem 0.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    min-width: 32px;
+    color: #495057;
+}
+.pulse-editor-toolbar .btn:hover {
+    background-color: #e2e6ea;
+    color: #212529;
+}
+.pulse-editor-toolbar .btn.active {
+    background-color: #d3d9df;
+    box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    color: #000;
+}
+
+/* --- AI Knoppen --- */
+.btn-magic {
+    background-color: #6f42c1 !important;
+    color: white !important;
+    transition: all 0.2s;
+}
+.btn-magic:hover {
+    background-color: #5936a2 !important;
+}
+.btn-ai-preset {
+    background-color: #f3e8ff !important;
+    color: #6f42c1 !important;
+    border: 1px solid #d8b4fe !important;
+    font-size: 0.85em;
+    font-weight: 500;
+    padding: 0 0.6rem !important;
+}
+.btn-ai-preset:hover {
+    background-color: #e9d5ff !important;
+}
+.btn-ai-preset svg {
+    margin-right: 4px;
+}
+
+/* --- Inhoudsgebied --- */
+.editor-content-area, .source-view {
+    min-height: 350px;
+    padding: 1.5rem;
+    outline: none;
+    line-height: 1.6;
+    resize: vertical;
+    overflow-y: auto;
+    box-sizing: border-box;
+    width: 100%;
+}
+.editor-content-area:focus {
+    box-shadow: none;
+}
+.editor-content-area p {
+    margin-bottom: 1rem;
+}
+.source-view {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9em;
+    color: #212529;
+    background-color: #f8f9fa;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    display: none;
+    border: none;
+    border-bottom-left-radius: 0.5rem;
+    border-bottom-right-radius: 0.5rem;
+}
+.toolbar-divider {
+    display: inline-block;
+    width: 1px;
+    background-color: #dee2e6;
+    margin: 0 0.25rem;
+    height: 1.5rem;
+    vertical-align: middle;
+}
+.pulse-editor-color-input {
+    padding: 0;
+    border: none;
+    background: none;
+}
+
+/* --- Aangepaste Dialogen --- */
+dialog {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    padding: 1.5rem;
+    max-width: 450px;
+    width: 90%;
+    background: #fff;
+    z-index: 9999; /* Ensure it's on top */
+}
+dialog::backdrop {
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+}
+.dialog-header {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: #212529;
+}
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
