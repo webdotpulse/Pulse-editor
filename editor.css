@@ -7,6 +7,24 @@
     max-width: 1000px;
     margin: 0 auto;
 }
+.editor-container.fullscreen-mode {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    margin: 0;
+    border-radius: 0;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+}
+.editor-container.fullscreen-mode .editor-content-area,
+.editor-container.fullscreen-mode .source-view {
+    flex: 1;
+    height: auto !important;
+}
 .pulse-editor-toolbar {
     background-color: #f1f3f5;
     padding: 0.5rem;
@@ -129,6 +147,17 @@
 }
 .editor-content-area p {
     margin-bottom: 1rem;
+}
+.editor-content-area .pulse-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+.editor-content-area .pulse-table th,
+.editor-content-area .pulse-table td {
+    border: 1px solid #dee2e6;
+    padding: 0.5rem;
+    min-width: 2rem;
 }
 .source-view {
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
