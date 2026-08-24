@@ -1,61 +1,399 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pulse Editor Demo</title>
+    <title>Pulse Editor 2.0 - AI-Powered Rich Text & Code Editor</title>
     <link rel="stylesheet" href="editor.css">
     <style>
-        body {
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            margin: 0;
-            padding: 2rem;
-            background-color: #f8f9fa;
+        :root {
+            --demo-bg: #f1f5f9;
+            --demo-text: #0f172a;
+            --demo-card: #ffffff;
+            --demo-border: #e2e8f0;
         }
+
+        body.demo-dark {
+            --demo-bg: #0b0f19;
+            --demo-text: #f8fafc;
+            --demo-card: #111827;
+            --demo-border: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 2rem 1rem;
+            background-color: var(--demo-bg);
+            color: var(--demo-text);
+            transition: background-color 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
+        }
+
         .container {
-            max-width: 1000px;
+            max-width: 1060px;
             margin: 0 auto;
         }
-        h1 {
-            text-align: center;
-            color: #343a40;
+
+        .demo-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
-        form {
-            margin-top: 2rem;
+
+        .brand-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-title {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-subtitle {
+            margin: 0;
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .demo-controls-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--demo-card);
+            border: 1px solid var(--demo-border);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .demo-select, .demo-btn {
+            padding: 0.5rem 0.85rem;
+            border-radius: 8px;
+            border: 1px solid var(--demo-border);
+            background: var(--demo-card);
+            color: var(--demo-text);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.15s ease;
+        }
+
+        .demo-btn:hover, .demo-select:hover {
+            border-color: #6366f1;
+        }
+
+        .demo-btn-primary {
+            background: #6366f1;
+            color: #ffffff;
+            border-color: #6366f1;
+        }
+
+        .demo-btn-primary:hover {
+            background: #4f46e5;
+        }
+
+        .demo-badge {
+            background: #eef2ff;
+            color: #4f46e5;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .demo-card-box {
+            background: var(--demo-card);
+            border: 1px solid var(--demo-border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+        }
+
+        .demo-card-box h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        pre.demo-log {
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.825rem;
+            overflow-x: auto;
+            max-height: 150px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Pulse Editor Demo</h1>
-        <div style="margin-bottom: 1rem; display: flex; gap: 1rem; align-items: center;">
-            <select id="lang-select" style="padding: 0.5rem; border-radius: 4px; border: 1px solid #ccc;">
-                <option value="">Rich Text Mode</option>
-                <option value="html">HTML</option>
-                <option value="css">CSS</option>
-                <option value="javascript">JavaScript</option>
-                <option value="json">JSON</option>
-                <option value="php">PHP</option>
-            </select>
-            <button id="search-btn" style="padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid #ccc; background: #fff; cursor: pointer;">Search (Ctrl+F)</button>
+        <!-- Header -->
+        <header class="demo-header">
+            <div class="brand-wrap">
+                <div class="brand-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                </div>
+                <div>
+                    <h1 class="brand-title">Pulse Editor 2.0</h1>
+                    <p class="brand-subtitle">AI-Powered Rich Text & Code Editor &bull; Lightweight & Dependency-Free</p>
+                </div>
+            </div>
+            <div class="control-group">
+                <button type="button" id="btn-theme-toggle" class="demo-btn">🌓 Donkere Modus</button>
+                <button type="button" id="btn-api-key" class="demo-btn">🔑 Gemini API Sleutel</button>
+                <button type="button" id="btn-shortcuts" class="demo-btn">⌨️ Sneltoetsen</button>
+            </div>
+        </header>
+
+        <!-- Top Control Bar -->
+        <div class="demo-controls-bar">
+            <div class="control-group">
+                <label for="lang-select" style="font-size: 0.875rem; font-weight: 600;">Modus:</label>
+                <select id="lang-select" class="demo-select">
+                    <option value="">📝 Rich Text Modus</option>
+                    <option value="javascript">⚡ JavaScript Modus</option>
+                    <option value="html">🌐 HTML Modus</option>
+                    <option value="css">🎨 CSS Modus</option>
+                    <option value="python">🐍 Python Modus</option>
+                    <option value="php">🐘 PHP Modus</option>
+                    <option value="json">📦 JSON Modus</option>
+                </select>
+
+                <select id="template-select" class="demo-select">
+                    <option value="">📂 Kies Voorbeeld Sjabloon...</option>
+                    <option value="article">📰 Blog Artikel met Tabel & Afbeelding</option>
+                    <option value="docs">📘 Technische Documentatie & Code</option>
+                    <option value="ai">🤖 AI Schrijfopdracht (Prompt)</option>
+                </select>
+            </div>
+
+            <div class="control-group">
+                <button type="button" id="btn-find" class="demo-btn">🔍 Zoeken & Vervangen</button>
+                <button type="button" id="btn-toggle-second" class="demo-btn">➕ 2e Editor Tonen</button>
+            </div>
         </div>
-        <div class="editor-container">
-            <div id="toolbar"></div>
-            <div id="editor" class="editor-content-area"></div>
-            <textarea id="source"></textarea>
+
+        <!-- Primary Editor Instance -->
+        <div class="editor-container" id="editor-wrapper-1">
+            <div id="toolbar-1"></div>
+            <div id="editor-1">
+                <h1>Welkom bij Pulse Editor 2.0</h1>
+                <p>Pulse Editor is een geavanceerde, lichtgewicht en afhankelijkheidsvrije rich text en code editor, uitgerust met <strong>Google Gemini 2.5 Generative AI</strong> mogelijkheden.</p>
+                
+                <blockquote>
+                    "Selecteer willekeurige tekst om de zwevende bubble-toolbar te zien of gebruik de magische AI-tools in de toolbar!"
+                </blockquote>
+
+                <h3>Belangrijkste Mogelijkheden</h3>
+                <ul>
+                    <li><strong>Generatieve AI Suite:</strong> Grammatica verbeteren, Samenvatten, Schrijfstijl / Toon wijzigen, Tekst Uitbreiden, Vertalen en SEO-optimalisatie.</li>
+                    <li><strong>Zwevende Bubble Toolbar:</strong> Snelle opmaak direct boven geselecteerde tekst.</li>
+                    <li><strong>Afbeeldingen & Tabellen:</strong> Klik op afbeeldingen voor schaal- en uitlijnopties; voeg responsieve tabellen in.</li>
+                    <li><strong>Code Modus:</strong> Volledige syntaxkleuring voor JavaScript, HTML, CSS, Python, PHP & JSON met regelnummers en code-folding.</li>
+                    <li><strong>Zoeken & Vervangen:</strong> Zowel in Rich Text als in Code Mode zonder DOM-verlies.</li>
+                </ul>
+
+                <table class="pulse-table">
+                    <thead>
+                        <tr>
+                            <th>Functie</th>
+                            <th>Omschrijving</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Generative AI</td>
+                            <td>Gemini 2.5 Flash integratie met strikte HTML-behoud regels</td>
+                            <td><span class="demo-badge">Actief</span></td>
+                        </tr>
+                        <tr>
+                            <td>Search & Replace</td>
+                            <td>Volledige TreeWalker zoek- en vervangengine voor Rich Text</td>
+                            <td><span class="demo-badge">Actief</span></td>
+                        </tr>
+                        <tr>
+                            <td>Dark Mode</td>
+                            <td>Modern CSS design system met instelbaar donker thema</td>
+                            <td><span class="demo-badge">Actief</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=800&q=80" alt="Code & Writing" style="max-width: 100%; border-radius: 8px;"></p>
+            </div>
+            <textarea id="source-1" style="display:none;"></textarea>
         </div>
-        <form>
-            <button type="submit" style="margin-top: 1rem; padding: 0.5rem 1rem; cursor: pointer;">Submit Content</button>
-        </form>
+
+        <!-- Optional Second Instance Container -->
+        <div id="second-instance-wrap" style="display: none; margin-top: 2rem;">
+            <h3 style="margin-bottom: 0.5rem;">Tweede Editor Instantie (Multi-Instance Demonstratie)</h3>
+            <div class="editor-container" id="editor-wrapper-2">
+                <div id="toolbar-2"></div>
+                <div id="editor-2">
+                    <p>Dit is een <strong>onafhankelijke tweede editor</strong> op dezelfde pagina. Pulse Editor ondersteunt meerdere instanties zonder ID-conflicten.</p>
+                </div>
+                <textarea id="source-2" style="display:none;"></textarea>
+            </div>
+        </div>
+
+        <!-- Live Event & Data Output -->
+        <div class="demo-card-box">
+            <h3>Live Gebeurtenissen & Inhoudsstatistieken</h3>
+            <pre class="demo-log" id="event-log">Editor geïnitialiseerd. Wijzig tekst om realtime events te volgen.</pre>
+        </div>
     </div>
 
+    <!-- Script Assets -->
     <script src="editor.js"></script>
     <script>
-        // Provide a dummy key or leave empty. In real use cases, user should provide their Gemini API Key.
-        // We initialize the editor when the DOM is fully loaded.
         document.addEventListener('DOMContentLoaded', () => {
-            initializePulseEditor('toolbar', 'editor', 'source', 'YOUR_GEMINI_API_KEY');
+            // Check for saved API key
+            const savedApiKey = localStorage.getItem('pulse_gemini_api_key') || '';
+
+            // Initialize Primary Editor
+            const editor1 = initializePulseEditor('toolbar-1', 'editor-1', 'source-1', {
+                apiKey: savedApiKey,
+                placeholder: 'Begin met typen of plak uw tekst hier...',
+                floatingMenu: true,
+                stats: true,
+                onChange: (data) => {
+                    const stats = editor1.getStats();
+                    const log = document.getElementById('event-log');
+                    log.innerText = `[Event: change] Woorden: ${stats.words}, Tekens: ${stats.characters}, Leestijd: ${stats.readingTimeMinutes} min\nInhoudslengte: ${data.html.length} bytes`;
+                }
+            });
+
+            // Initialize Second Editor (Lazy on toggle)
+            let editor2 = null;
+            document.getElementById('btn-toggle-second').addEventListener('click', () => {
+                const wrap = document.getElementById('second-instance-wrap');
+                const isHidden = wrap.style.display === 'none';
+                wrap.style.display = isHidden ? 'block' : 'none';
+                document.getElementById('btn-toggle-second').innerText = isHidden ? '➖ 2e Editor Verbergen' : '➕ 2e Editor Tonen';
+
+                if (isHidden && !editor2) {
+                    editor2 = initializePulseEditor('toolbar-2', 'editor-2', 'source-2', {
+                        apiKey: savedApiKey,
+                        placeholder: 'Typ hier in editor 2...'
+                    });
+                }
+            });
+
+            // Language Selector
+            const langSelect = document.getElementById('lang-select');
+            langSelect.addEventListener('change', (e) => {
+                editor1.setLanguage(e.target.value);
+            });
+
+            // Templates
+            const templateSelect = document.getElementById('template-select');
+            templateSelect.addEventListener('change', (e) => {
+                const val = e.target.value;
+                if (val === 'article') {
+                    editor1.setContent(`
+                        <h1>De Toekomst van AI in Webontwikkeling</h1>
+                        <p>Kunstmatige intelligentie transformeert de manier waarop ontwikkelaars en schrijvers interactieve content creëren.</p>
+                        <table class="pulse-table">
+                            <thead><tr><th>Technologie</th><th>Toepassing</th><th>Impact</th></tr></thead>
+                            <tbody>
+                                <tr><td>LLM's</td><td>Tekstgeneratie & Code Assistentie</td><td>Hoog</td></tr>
+                                <tr><td>Browser API's</td><td>Lokale AI-executie</td><td>Gemiddeld</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Dankzij moderne componenten kunnen editors naadloos en snel reageren op gebruikersinteracties.</p>
+                    `);
+                } else if (val === 'docs') {
+                    editor1.setContent(`
+                        <h1>API Referentie & Gebruik</h1>
+                        <p>Pulse Editor kan eenvoudig worden geïntegreerd in elk webproject met Vanilla JS, React of Vue.</p>
+                        <pre><code class="language-javascript">import { initializePulseEditor } from './editor.js';\n\nconst editor = initializePulseEditor('toolbar', 'editor', 'source', {\n    apiKey: 'AI_KEY',\n    theme: 'dark'\n});</code></pre>
+                        <p>Raadpleeg de handleiding voor meer configuratieopties.</p>
+                    `);
+                } else if (val === 'ai') {
+                    editor1.setContent(`
+                        <h1>AI Creatieve Opdracht</h1>
+                        <p>Schrijf een enthousiaste introductie voor een innovatieve software startup genaamd PulseSync, die real-time documentensynchronisatie aanbiedt.</p>
+                        <p><em>(Selecteer bovenstaande tekst en klik in de toolbar op 'Vraag AI' of 'Tekst Uitbreiden' om de magie te ervaren!)</em></p>
+                    `);
+                }
+            });
+
+            // Theme Toggle
+            const themeBtn = document.getElementById('btn-theme-toggle');
+            themeBtn.addEventListener('click', () => {
+                const isDark = document.body.classList.toggle('demo-dark');
+                editor1.setTheme(isDark ? 'dark' : 'light');
+                if (editor2) editor2.setTheme(isDark ? 'dark' : 'light');
+                themeBtn.innerText = isDark ? '☀️ Lichte Modus' : '🌓 Donkere Modus';
+            });
+
+            // API Key Button
+            document.getElementById('btn-api-key').addEventListener('click', async () => {
+                const currentKey = localStorage.getItem('pulse_gemini_api_key') || '';
+                const newKey = await PulseEditor.Dialogs.askInput(
+                    'Gemini API Key Instellen',
+                    'Plak hier uw API sleutel...',
+                    currentKey,
+                    'Voer uw persoonlijke Google Gemini API key in om AI-functies direct te activeren.'
+                );
+                if (newKey !== null) {
+                    localStorage.setItem('pulse_gemini_api_key', newKey);
+                    window.geminiApiKey = newKey;
+                    await PulseEditor.Dialogs.showMessage('Succes', 'API-sleutel succesvol opgeslagen!');
+                }
+            });
+
+            // Shortcuts Button
+            document.getElementById('btn-shortcuts').addEventListener('click', () => {
+                PulseEditor.Dialogs.showShortcuts();
+            });
+
+            // Find Button
+            document.getElementById('btn-find').addEventListener('click', () => {
+                editor1.execCommand('toggleSearch');
+            });
         });
     </script>
 </body>

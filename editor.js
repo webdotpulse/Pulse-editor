@@ -1,802 +1,1051 @@
-// ---------------------------------------------------------
-// GEMINI API CONFIGURATIE
-// ---------------------------------------------------------
-const apiKey = (typeof window !== 'undefined' && window.geminiApiKey) ? window.geminiApiKey : "";
+/**
+ * Pulse Editor - Lightweight, Dependency-Free AI-Powered Rich Text & Code Editor
+ * https://github.com/webdotpulse/Pulse-editor
+ *
+ * @version 2.0.0
+ * @license MIT
+ */
 
-// ---------------------------------------------------------
-// SVG ICOON ASSETS (Lucide stijl)
-// ---------------------------------------------------------
-const wrapSvg = (paths) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
-
-const ICONS = {
-    magic: wrapSvg('<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>'),
-    grammar: wrapSvg('<path d="m15 21 2-2 4 4"/><path d="M4.5 13h5"/><path d="M3 16l4.5-12 4.5 12"/>'),
-    summarize: wrapSvg('<path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h6"/>'),
-    professional: wrapSvg('<rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
-    translate: wrapSvg('<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="m14 18h6"/>'),
-    bold: wrapSvg('<path d="M14 12a4 4 0 0 0 0-8H6v8"/><path d="M15 20a4 4 0 0 0 0-8H6v8Z"/>'),
-    italic: wrapSvg('<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>'),
-    underline: wrapSvg('<path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/>'),
-    strike: wrapSvg('<path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/>'),
-    h1: wrapSvg('<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="m17 12 3-2v8"/>'),
-    h2: wrapSvg('<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/>'),
-    p: wrapSvg('<path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/>'),
-    quote: wrapSvg('<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>'),
-    ul: wrapSvg('<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>'),
-    ol: wrapSvg('<line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>'),
-    left: wrapSvg('<line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/>'),
-    center: wrapSvg('<line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/>'),
-    link: wrapSvg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
-    unlink: wrapSvg('<path d="m18.84 12.25 1.72-1.71h-.01a5.001 5.001 0 0 0-7.07-7.07l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.001 5.001 0 0 0 7.07 7.07l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/>'),
-    image: wrapSvg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
-    color: wrapSvg('<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>'),
-    undo: wrapSvg('<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>'),
-    code: wrapSvg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'),
-    table: wrapSvg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="9" y2="21"/>'),
-    markdown: wrapSvg('<path d="M20.5 5h-17C2.12 5 1 6.12 1 7.5v9C1 17.88 2.12 19 3.5 19h17c1.38 0 2.5-1.12 2.5-2.5v-9C23 6.12 21.88 5 20.5 5zm-14.7 10h-2V9.87l-1.3 1.3-1.4-1.4 3.7-3.7 3.7 3.7-1.4 1.4-1.3-1.3V15zm8.4-1.3H16v-2h-2V9.5h-1.8v2.2h-2v2h2v1.3H12l3.1 3.1 3.1-3.1h-4z"/>'),
-    maximize: wrapSvg('<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>'),
-    minimize: wrapSvg('<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>')
-};
-
-// ---------------------------------------------------------
-// AANGEPASTE UI DIALOGEN
-// ---------------------------------------------------------
-function injectDialogs() {
-    if (!document.getElementById('message-dialog') && !document.getElementById('input-dialog')) {
-        const dialogHTML = `
-            <!-- Herbruikbare Melding Dialoog -->
-            <dialog id="message-dialog">
-                <form method="dialog">
-                    <div class="dialog-header" id="message-dialog-title">Melding</div>
-                    <p id="message-dialog-body" class="text-muted"></p>
-                    <div class="dialog-actions">
-                        <button type="submit" class="btn btn-primary">OK</button>
-                    </div>
-                </form>
-            </dialog>
-
-            <!-- Herbruikbare Invoer Dialoog -->
-            <dialog id="input-dialog">
-                <form method="dialog" id="input-dialog-form">
-                    <div class="dialog-header" id="input-dialog-title">Invoer Vereist</div>
-                    <p id="input-dialog-hint" class="text-muted mb-2" style="font-size: 0.9em; display: none;"></p>
-                    <input type="text" id="input-dialog-field" class="form-control" required>
-                    <div class="dialog-actions">
-                        <button type="button" class="btn btn-light" id="input-cancel-btn">Annuleren</button>
-                        <button type="submit" class="btn btn-primary">Verzenden</button>
-                    </div>
-                </form>
-            </dialog>
-
-            <!-- Herbruikbare Textarea Dialoog -->
-            <dialog id="textarea-dialog">
-                <form method="dialog" id="textarea-dialog-form">
-                    <div class="dialog-header" id="textarea-dialog-title">Invoer Vereist</div>
-                    <p id="textarea-dialog-hint" class="text-muted mb-2" style="font-size: 0.9em; display: none;"></p>
-                    <textarea id="textarea-dialog-field" class="form-control" required style="width: 100%; min-height: 150px;"></textarea>
-                    <div class="dialog-actions">
-                        <button type="button" class="btn btn-light" id="textarea-cancel-btn">Annuleren</button>
-                        <button type="submit" class="btn btn-primary">Verzenden</button>
-                    </div>
-                </form>
-            </dialog>
-        `;
-        document.body.insertAdjacentHTML('beforeend', dialogHTML);
+(function (global, factory) {
+    if (typeof exports === 'object' && typeof module !== 'undefined') {
+        module.exports = factory();
+    } else if (typeof define === 'function' && define.amd) {
+        define(factory);
+    } else {
+        const exports = factory();
+        global.initializePulseEditor = exports.initializePulseEditor;
+        global.PulseEditor = exports.PulseEditor;
     }
-}
+}(typeof globalThis !== 'undefined' ? globalThis : typeof self !== 'undefined' ? self : this, function () {
+    'use strict';
 
-function showMessage(title, message) {
-    injectDialogs();
-    const dialog = document.getElementById('message-dialog');
-    document.getElementById('message-dialog-title').innerText = title;
-    document.getElementById('message-dialog-body').innerText = message;
-    dialog.showModal();
-}
+    let instanceCounter = 0;
 
-function askInput(title, placeholder, defaultValue = '', hint = '') {
-    injectDialogs();
-    return new Promise(resolve => {
-        const dialog = document.getElementById('input-dialog');
-        const input = document.getElementById('input-dialog-field');
-        const hintEl = document.getElementById('input-dialog-hint');
+    // ---------------------------------------------------------
+    // SVG ICONS (Lucide Style)
+    // ---------------------------------------------------------
+    const wrapSvg = (paths) => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>`;
 
-        document.getElementById('input-dialog-title').innerText = title;
-        input.placeholder = placeholder;
-        input.value = defaultValue;
+    const ICONS = {
+        magic: wrapSvg('<path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/>'),
+        grammar: wrapSvg('<path d="m15 21 2-2 4 4"/><path d="M4.5 13h5"/><path d="M3 16l4.5-12 4.5 12"/>'),
+        expand: wrapSvg('<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" x2="14" y1="3" y2="10"/><line x1="3" x2="10" y1="21" y2="14"/>'),
+        tone: wrapSvg('<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>'),
+        summarize: wrapSvg('<path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h6"/>'),
+        professional: wrapSvg('<rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>'),
+        translate: wrapSvg('<path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="m14 18h6"/>'),
+        seo: wrapSvg('<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><path d="M11 8v6"/><path d="M8 11h6"/>'),
+        tags: wrapSvg('<path d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z"/><path d="M7 7h.01"/>'),
+        bold: wrapSvg('<path d="M14 12a4 4 0 0 0 0-8H6v8"/><path d="M15 20a4 4 0 0 0 0-8H6v8Z"/>'),
+        italic: wrapSvg('<line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/>'),
+        underline: wrapSvg('<path d="M6 4v6a6 6 0 0 0 12 0V4"/><line x1="4" x2="20" y1="20" y2="20"/>'),
+        strike: wrapSvg('<path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/>'),
+        h1: wrapSvg('<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="m17 12 3-2v8"/>'),
+        h2: wrapSvg('<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M21 18h-4c0-4 4-3 4-6 0-1.5-2-2.5-4-1"/>'),
+        h3: wrapSvg('<path d="M4 12h8"/><path d="M4 18V6"/><path d="M12 18V6"/><path d="M17.5 10.5c1.7-1 3.5 0 3.5 1.5a2 2 0 0 1-2 2"/><path d="M17 18a4 4 0 0 0 4-4"/>'),
+        p: wrapSvg('<path d="M13 4v16"/><path d="M17 4v16"/><path d="M19 4H9.5a4.5 4.5 0 0 0 0 9H13"/>'),
+        quote: wrapSvg('<path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/>'),
+        ul: wrapSvg('<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>'),
+        ol: wrapSvg('<line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/>'),
+        left: wrapSvg('<line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/>'),
+        center: wrapSvg('<line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/>'),
+        right: wrapSvg('<line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/>'),
+        justify: wrapSvg('<line x1="3" x2="21" y1="6" y2="6"/><line x1="3" x2="21" y1="12" y2="12"/><line x1="3" x2="21" y1="18" y2="18"/>'),
+        link: wrapSvg('<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>'),
+        unlink: wrapSvg('<path d="m18.84 12.25 1.72-1.71h-.01a5.001 5.001 0 0 0-7.07-7.07l-1.72 1.71"/><path d="m5.17 11.75-1.71 1.71a5.001 5.001 0 0 0 7.07 7.07l1.71-1.71"/><line x1="8" x2="8" y1="2" y2="5"/><line x1="2" x2="5" y1="8" y2="8"/><line x1="16" x2="16" y1="19" y2="22"/><line x1="19" x2="22" y1="16" y2="16"/>'),
+        image: wrapSvg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'),
+        color: wrapSvg('<circle cx="13.5" cy="6.5" r=".5"/><circle cx="17.5" cy="10.5" r=".5"/><circle cx="8.5" cy="7.5" r=".5"/><circle cx="6.5" cy="12.5" r=".5"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"/>'),
+        undo: wrapSvg('<path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>'),
+        redo: wrapSvg('<path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>'),
+        code: wrapSvg('<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'),
+        table: wrapSvg('<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="9" y2="21"/>'),
+        hr: wrapSvg('<line x1="3" x2="21" y1="12" y2="12"/>'),
+        clear: wrapSvg('<path d="M12 2v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="M2 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M12 22v-4"/><path d="m19.07 19.07-2.83-2.83"/><path d="M22 12h-4"/><path d="m19.07 4.93-2.83 2.83"/>'),
+        markdown: wrapSvg('<path d="M20.5 5h-17C2.12 5 1 6.12 1 7.5v9C1 17.88 2.12 19 3.5 19h17c1.38 0 2.5-1.12 2.5-2.5v-9C23 6.12 21.88 5 20.5 5zm-14.7 10h-2V9.87l-1.3 1.3-1.4-1.4 3.7-3.7 3.7 3.7-1.4 1.4-1.3-1.3V15zm8.4-1.3H16v-2h-2V9.5h-1.8v2.2h-2v2h2v1.3H12l3.1 3.1 3.1-3.1h-4z"/>'),
+        search: wrapSvg('<circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/>'),
+        maximize: wrapSvg('<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/>'),
+        minimize: wrapSvg('<path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>'),
+        theme: wrapSvg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/>'),
+        help: wrapSvg('<circle cx="12" cy="12" r="10"/><path d="9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/>'),
+        settings: wrapSvg('<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/>')
+    };
 
-        if (hint) {
-            hintEl.innerText = hint;
-            hintEl.style.display = 'block';
-        } else {
-            hintEl.style.display = 'none';
-        }
+    // ---------------------------------------------------------
+    // DIALOG SYSTEM (Leak-Free & Escape-Safe)
+    // ---------------------------------------------------------
+    const Dialogs = {
+        showMessage(title, message) {
+            return new Promise((resolve) => {
+                const dialog = document.createElement('dialog');
+                dialog.className = 'pulse-dialog';
+                dialog.innerHTML = `
+                    <form method="dialog">
+                        <div class="dialog-header">${title}</div>
+                        <div class="dialog-body">${message}</div>
+                        <div class="dialog-actions">
+                            <button type="submit" class="dialog-btn dialog-btn-primary">OK</button>
+                        </div>
+                    </form>
+                `;
+                document.body.appendChild(dialog);
+                const cleanup = () => {
+                    dialog.remove();
+                    resolve(true);
+                };
+                dialog.addEventListener('close', cleanup, { once: true });
+                dialog.showModal();
+            });
+        },
 
-        const cancelBtn = document.getElementById('input-cancel-btn');
-        const form = document.getElementById('input-dialog-form');
+        askInput(title, placeholder = '', defaultValue = '', hint = '') {
+            return new Promise((resolve) => {
+                const dialog = document.createElement('dialog');
+                dialog.className = 'pulse-dialog';
+                dialog.innerHTML = `
+                    <form method="dialog">
+                        <div class="dialog-header">${title}</div>
+                        ${hint ? `<div class="dialog-body" style="margin-bottom: 0.5rem; font-size: 0.85em;">${hint}</div>` : ''}
+                        <input type="text" class="dialog-input" placeholder="${placeholder}" value="${defaultValue}" required autofocus>
+                        <div class="dialog-actions">
+                            <button type="button" class="dialog-btn dialog-btn-cancel" data-action="cancel">Annuleren</button>
+                            <button type="submit" class="dialog-btn dialog-btn-primary">Verzenden</button>
+                        </div>
+                    </form>
+                `;
+                document.body.appendChild(dialog);
+                const input = dialog.querySelector('input');
+                const form = dialog.querySelector('form');
+                const cancelBtn = dialog.querySelector('[data-action="cancel"]');
+                let resolvedValue = null;
 
-        const cleanup = () => {
-            cancelBtn.removeEventListener('click', onCancel);
-            form.removeEventListener('submit', onSubmit);
-        };
+                cancelBtn.addEventListener('click', () => {
+                    resolvedValue = null;
+                    dialog.close();
+                });
 
-        const onCancel = (e) => {
-            e.preventDefault();
-            cleanup();
-            dialog.close();
-            resolve(null);
-        };
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    resolvedValue = input.value;
+                    dialog.close();
+                });
 
-        const onSubmit = (e) => {
-            e.preventDefault();
-            cleanup();
-            dialog.close();
-            resolve(input.value);
-        };
+                dialog.addEventListener('close', () => {
+                    dialog.remove();
+                    resolve(resolvedValue);
+                }, { once: true });
 
-        cancelBtn.addEventListener('click', onCancel);
-        form.addEventListener('submit', onSubmit);
+                dialog.showModal();
+                input.select();
+            });
+        },
 
-        dialog.showModal();
-    });
-}
+        askTextarea(title, placeholder = '', defaultValue = '', hint = '') {
+            return new Promise((resolve) => {
+                const dialog = document.createElement('dialog');
+                dialog.className = 'pulse-dialog';
+                dialog.style.maxWidth = '600px';
+                dialog.innerHTML = `
+                    <form method="dialog">
+                        <div class="dialog-header">${title}</div>
+                        ${hint ? `<div class="dialog-body" style="margin-bottom: 0.5rem; font-size: 0.85em;">${hint}</div>` : ''}
+                        <textarea class="dialog-textarea" style="min-height: 180px;" placeholder="${placeholder}">${defaultValue}</textarea>
+                        <div class="dialog-actions">
+                            <button type="button" class="dialog-btn dialog-btn-cancel" data-action="cancel">Annuleren</button>
+                            <button type="submit" class="dialog-btn dialog-btn-primary">OK</button>
+                        </div>
+                    </form>
+                `;
+                document.body.appendChild(dialog);
+                const textarea = dialog.querySelector('textarea');
+                const form = dialog.querySelector('form');
+                const cancelBtn = dialog.querySelector('[data-action="cancel"]');
+                let resolvedValue = null;
 
-function askTextarea(title, placeholder, defaultValue = '', hint = '') {
-    injectDialogs();
-    return new Promise(resolve => {
-        const dialog = document.getElementById('textarea-dialog');
-        const textarea = document.getElementById('textarea-dialog-field');
-        const hintEl = document.getElementById('textarea-dialog-hint');
+                cancelBtn.addEventListener('click', () => {
+                    resolvedValue = null;
+                    dialog.close();
+                });
 
-        document.getElementById('textarea-dialog-title').innerText = title;
-        textarea.placeholder = placeholder;
-        textarea.value = defaultValue;
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    resolvedValue = textarea.value;
+                    dialog.close();
+                });
 
-        if (hint) {
-            hintEl.innerText = hint;
-            hintEl.style.display = 'block';
-        } else {
-            hintEl.style.display = 'none';
-        }
+                dialog.addEventListener('close', () => {
+                    dialog.remove();
+                    resolve(resolvedValue);
+                }, { once: true });
 
-        const cancelBtn = document.getElementById('textarea-cancel-btn');
-        const form = document.getElementById('textarea-dialog-form');
+                dialog.showModal();
+                textarea.focus();
+            });
+        },
 
-        const cleanup = () => {
-            cancelBtn.removeEventListener('click', onCancel);
-            form.removeEventListener('submit', onSubmit);
-        };
+        askSelect(title, options = [], defaultVal = '', hint = '') {
+            return new Promise((resolve) => {
+                const dialog = document.createElement('dialog');
+                dialog.className = 'pulse-dialog';
+                const optsHtml = options.map(opt => {
+                    const val = typeof opt === 'string' ? opt : opt.value;
+                    const label = typeof opt === 'string' ? opt : opt.label;
+                    return `<option value="${val}" ${val === defaultVal ? 'selected' : ''}>${label}</option>`;
+                }).join('');
 
-        const onCancel = (e) => {
-            e.preventDefault();
-            cleanup();
-            dialog.close();
-            resolve(null);
-        };
+                dialog.innerHTML = `
+                    <form method="dialog">
+                        <div class="dialog-header">${title}</div>
+                        ${hint ? `<div class="dialog-body" style="margin-bottom: 0.5rem; font-size: 0.85em;">${hint}</div>` : ''}
+                        <select class="dialog-select" required autofocus>
+                            ${optsHtml}
+                        </select>
+                        <div class="dialog-actions">
+                            <button type="button" class="dialog-btn dialog-btn-cancel" data-action="cancel">Annuleren</button>
+                            <button type="submit" class="dialog-btn dialog-btn-primary">Selecteren</button>
+                        </div>
+                    </form>
+                `;
+                document.body.appendChild(dialog);
+                const select = dialog.querySelector('select');
+                const form = dialog.querySelector('form');
+                const cancelBtn = dialog.querySelector('[data-action="cancel"]');
+                let resolvedValue = null;
 
-        const onSubmit = (e) => {
-            e.preventDefault();
-            cleanup();
-            dialog.close();
-            resolve(textarea.value);
-        };
+                cancelBtn.addEventListener('click', () => {
+                    resolvedValue = null;
+                    dialog.close();
+                });
 
-        cancelBtn.addEventListener('click', onCancel);
-        form.addEventListener('submit', onSubmit);
+                form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    resolvedValue = select.value;
+                    dialog.close();
+                });
 
-        dialog.showModal();
-    });
-}
+                dialog.addEventListener('close', () => {
+                    dialog.remove();
+                    resolve(resolvedValue);
+                }, { once: true });
 
-// ---------------------------------------------------------
-// GEMINI API AANROEP LOGICA MET RETRY
-// ---------------------------------------------------------
-async function callGeminiAPI(promptText, configuredKey) {
-    const keyToUse = configuredKey || apiKey;
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToUse}`;
+                dialog.showModal();
+            });
+        },
 
-    // We gebruiken hier extreem strikte systeemregels om te voorkomen dat Gemini
-    // Markdown, conversationele tekst of extra wrapper tags (zoals <h2> of <p>) toevoegt.
-    const payload = {
-        contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: {
-            parts: [{
-                text: "You are a strict HTML text-processing AI. Modify the text inside the HTML according to the user's instructions.\n\nCRITICAL RULES:\n1. Keep the EXACT SAME HTML tags, attributes, and structure.\n2. DO NOT add any new wrapper tags around the output.\n3. DO NOT output markdown code blocks.\n4. Output ONLY the raw HTML string.\n\nEXAMPLE INPUT:\n<h2>Hello</h2>\n<p>This is <b>bold</b>.</p>\n\nEXAMPLE CORRECT OUTPUT:\n<h2>Bonjour</h2>\n<p>C'est <b>gras</b>.</p>\n\nINCORRECT OUTPUT (Never wrap the output in extra tags!):\n<h2><h2>Bonjour</h2><p>C'est <b>gras</b>.</p></h2>"
-            }]
+        showShortcuts() {
+            const shortcuts = [
+                { key: 'Ctrl + B', desc: 'Vetgedrukt (Bold)' },
+                { key: 'Ctrl + I', desc: 'Cursief (Italic)' },
+                { key: 'Ctrl + U', desc: 'Onderstreept (Underline)' },
+                { key: 'Ctrl + K', desc: 'Link invoegen' },
+                { key: 'Ctrl + F', desc: 'Zoeken & Vervangen' },
+                { key: 'Ctrl + H', desc: 'Vervangen' },
+                { key: 'Ctrl + Z', desc: 'Ongedaan maken (Undo)' },
+                { key: 'Ctrl + Y', desc: 'Opnieuw uitvoeren (Redo)' },
+                { key: 'Ctrl + Alt + 1', desc: 'Koptekst 1 (H1)' },
+                { key: 'Ctrl + Alt + 2', desc: 'Koptekst 2 (H2)' },
+                { key: 'Ctrl + Alt + 0', desc: 'Paragraaf (Normal)' },
+                { key: 'Ctrl + Shift + 8', desc: 'Opsommingslijst' },
+                { key: 'Ctrl + Shift + 7', desc: 'Genummerde lijst' },
+                { key: 'Ctrl + /', desc: 'Sneltoetsen overzicht' }
+            ];
+
+            const gridHtml = shortcuts.map(s => `
+                <div class="shortcut-item">
+                    <span>${s.desc}</span>
+                    <kbd>${s.key}</kbd>
+                </div>
+            `).join('');
+
+            return this.showMessage(
+                'Pulse Editor - Sneltoetsen',
+                `<div class="shortcuts-grid">${gridHtml}</div>`
+            );
         }
     };
 
-    const delays = [1000, 2000, 4000, 8000];
-    let lastError;
+    // ---------------------------------------------------------
+    // GEMINI GENERATIVE AI CLIENT
+    // ---------------------------------------------------------
+    async function callGeminiAPI(promptText, configuredKey) {
+        let keyToUse = configuredKey || (typeof window !== 'undefined' ? window.geminiApiKey : "") || "";
+        if (!keyToUse && typeof localStorage !== 'undefined') {
+            keyToUse = localStorage.getItem('pulse_gemini_api_key') || "";
+        }
 
-    for (let i = 0; i <= delays.length; i++) {
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            if (!response.ok) throw new Error(`API fout (${response.status})`);
-
-            const result = await response.json();
-            return result.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        } catch (err) {
-            lastError = err;
-            if (i < delays.length) {
-                await new Promise(res => setTimeout(res, delays[i]));
+        if (!keyToUse) {
+            keyToUse = await Dialogs.askInput(
+                'Gemini API Key Vereist',
+                'Plak hier uw Google Gemini API key...',
+                '',
+                'Geen API-sleutel gevonden. Voer een geldige Google Gemini API-sleutel in om AI-functies te gebruiken.'
+            );
+            if (!keyToUse) throw new Error('Geen Gemini API Key geconfigureerd.');
+            if (typeof localStorage !== 'undefined') {
+                localStorage.setItem('pulse_gemini_api_key', keyToUse);
+            }
+            if (typeof window !== 'undefined') {
+                window.geminiApiKey = keyToUse;
             }
         }
-    }
-    throw new Error(`Inhoud genereren mislukt: ${lastError.message}`);
-}
 
-// ---------------------------------------------------------
-// SYNTAX LEXER CONFIGURATIE
-// ---------------------------------------------------------
-const syntaxRules = {
-    javascript: [
-        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*'|`(?:\\`|[^`])*`)/g, class: 'string' },
-        { regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/g, class: 'comment' },
-        { regex: /\b(function|const|let|var|if|else|for|while|return|new|this|class|extends|import|export|await|async|try|catch|switch|case|default|break|continue)\b/g, class: 'keyword' },
-        { regex: /\b(\d+(?:\.\d+)?)\b/g, class: 'number' },
-        { regex: /([=+*\/%<>&|!?-]+)/g, class: 'operator' }
-    ],
-    css: [
-        { regex: /(\/\*[\s\S]*?\*\/)/g, class: 'comment' },
-        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' },
-        { regex: /(@(?:media|import|keyframes|font-face|supports)\b)/g, class: 'keyword' },
-        { regex: /([a-zA-Z-]+)(?=\s*:)/g, class: 'keyword' }, // Property names
-        { regex: /\b(\d+(?:px|em|rem|%|vh|vw|s|ms|deg)?)\b/g, class: 'number' },
-        { regex: /(#[0-9a-fA-F]{3,6}\b)/g, class: 'number' }, // Hex colors
-        { regex: /([{}()])/g, class: 'operator' }
-    ],
-    html: [
-        { regex: /(&lt;!--[\s\S]*?--&gt;)/g, class: 'comment' },
-        { regex: /(&lt;\/?[a-zA-Z0-9-]+)/g, class: 'tag' }, // Open tag start
-        { regex: /(&gt;)/g, class: 'tag' }, // Close tag end
-        { regex: /([a-zA-Z0-9-]+)=/g, class: 'attr' },
-        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' }
-    ],
-    php: [
-        { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' },
-        { regex: /(\/\/.*|\/\*[\s\S]*?\*\/|#.*)/g, class: 'comment' },
-        { regex: /\b(echo|if|else|elseif|for|foreach|while|do|switch|case|default|break|continue|function|return|class|extends|implements|public|private|protected|static|new|require|include|require_once|include_once)\b/g, class: 'keyword' },
-        { regex: /(\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)/g, class: 'attr' }, // Variables
-        { regex: /\b(\d+(?:\.\d+)?)\b/g, class: 'number' },
-        { regex: /(&lt;\?php|\?&gt;)/gi, class: 'keyword' }
-    ],
-    json: [
-        { regex: /("(?:\\"|[^"])*")(?=\s*:)/g, class: 'attr' }, // Keys
-        { regex: /(?<=:\s*)("(?:\\"|[^"])*")/g, class: 'string' }, // Values (strings)
-        { regex: /\b(true|false|null)\b/g, class: 'keyword' },
-        { regex: /\b(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g, class: 'number' },
-        { regex: /([{}\[\]])/g, class: 'operator' }
-    ]
-};
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${keyToUse}`;
 
-function tokenizeText(text, lang, searchQuery = '', useRegex = false) {
-    // 1. Escape HTML
-    let escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // 2. Syntax Highlighting
-    if (lang && syntaxRules[lang]) {
-        // We use a placeholder approach to avoid replacing within already injected HTML tags
-        const tokens = [];
-        const rules = syntaxRules[lang];
-
-        rules.forEach((rule, ruleIdx) => {
-            escaped = escaped.replace(rule.regex, (match, p1) => {
-                const id = `__TOKEN_${tokens.length}__`;
-                tokens.push(`<span class="token ${rule.class}">${p1 || match}</span>`);
-                return id;
-            });
-        });
-
-        // Restore tokens
-        for (let i = tokens.length - 1; i >= 0; i--) {
-            escaped = escaped.replace(`__TOKEN_${i}__`, tokens[i]);
-        }
-    }
-
-    // 3. Search Highlighting
-    if (searchQuery) {
-        try {
-            const flags = 'gi';
-            let regex;
-            if (useRegex) {
-                regex = new RegExp(`(${searchQuery})`, flags);
-            } else {
-                const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                regex = new RegExp(`(${escapedQuery})`, flags);
+        const payload = {
+            contents: [{ parts: [{ text: promptText }] }],
+            systemInstruction: {
+                parts: [{
+                    text: "You are a strict, world-class HTML text-processing AI assistant for rich text editors.\n\nCRITICAL RULES:\n1. Maintain all existing HTML tags, attributes, links, and structure unless explicitly instructed otherwise.\n2. DO NOT add top-level wrapper tags if they were not in the input.\n3. DO NOT output markdown code blocks (such as ```html ... ```).\n4. Return ONLY valid, clean HTML ready for direct DOM insertion."
+                }]
             }
+        };
 
-            // To avoid matching inside our syntax span tags, we split by tags
-            const parts = escaped.split(/(<[^>]*>)/g);
-            for (let i = 0; i < parts.length; i++) {
-                if (!parts[i].startsWith('<')) {
-                    parts[i] = parts[i].replace(regex, '<mark class="search-match">$1</mark>');
+        const delays = [1000, 2000, 4000];
+        let lastError;
+
+        for (let i = 0; i <= delays.length; i++) {
+            try {
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    const msg = errData.error?.message || `HTTP ${response.status}`;
+                    throw new Error(`Gemini API fout: ${msg}`);
+                }
+
+                const result = await response.json();
+                let output = result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                output = output.replace(/^```[a-z]*\n?/im, '').replace(/```\n?$/im, '').trim();
+                return output;
+            } catch (err) {
+                lastError = err;
+                if (i < delays.length) {
+                    await new Promise(res => setTimeout(res, delays[i]));
                 }
             }
-            escaped = parts.join('');
-        } catch (e) {
-            // Invalid regex, ignore
         }
+        throw new Error(`AI genereren mislukt: ${lastError.message}`);
     }
 
-    // 4. Wrap lines
-    const lines = escaped.split('\n');
-    return lines.map(line => `<div class="code-line">${line || '<br>'}</div>`).join('');
-}
+    // ---------------------------------------------------------
+    // SYNTAX LEXER CONFIGURATION
+    // ---------------------------------------------------------
+    const syntaxRules = {
+        javascript: [
+            { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*'|`(?:\\`|[^`])*`)/g, class: 'string' },
+            { regex: /(\/\/.*|\/\*[\s\S]*?\*\/)/g, class: 'comment' },
+            { regex: /\b(function|const|let|var|if|else|for|while|return|new|this|class|extends|import|export|from|await|async|try|catch|switch|case|default|break|continue|typeof|instanceof)\b/g, class: 'keyword' },
+            { regex: /\b(\d+(?:\.\d+)?)\b/g, class: 'number' },
+            { regex: /([=+*\/%<>&|!?-]+)/g, class: 'operator' }
+        ],
+        css: [
+            { regex: /(\/\*[\s\S]*?\*\/)/g, class: 'comment' },
+            { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' },
+            { regex: /(@(?:media|import|keyframes|font-face|supports|container)\b)/g, class: 'keyword' },
+            { regex: /([a-zA-Z-]+)(?=\s*:)/g, class: 'attr' },
+            { regex: /\b(\d+(?:px|em|rem|%|vh|vw|s|ms|deg|fr)?)\b/g, class: 'number' },
+            { regex: /(#[0-9a-fA-F]{3,8}\b)/g, class: 'number' },
+            { regex: /([{}()])/g, class: 'operator' }
+        ],
+        html: [
+            { regex: /(&lt;!--[\s\S]*?--&gt;)/g, class: 'comment' },
+            { regex: /(&lt;\/?[a-zA-Z0-9-]+)/g, class: 'tag' },
+            { regex: /(&gt;)/g, class: 'tag' },
+            { regex: /([a-zA-Z0-9-]+)=/g, class: 'attr' },
+            { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' }
+        ],
+        php: [
+            { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*')/g, class: 'string' },
+            { regex: /(\/\/.*|\/\*[\s\S]*?\*\/|#.*)/g, class: 'comment' },
+            { regex: /\b(echo|if|else|elseif|for|foreach|while|do|switch|case|default|break|continue|function|return|class|extends|implements|public|private|protected|static|new|require|include|require_once|include_once|namespace|use|trait)\b/g, class: 'keyword' },
+            { regex: /(\$[a-zA-Z_\x7f-\xff][a-zA-Z0-9_\x7f-\xff]*)/g, class: 'variable' },
+            { regex: /\b(\d+(?:\.\d+)?)\b/g, class: 'number' },
+            { regex: /(&lt;\?php|\?&gt;)/gi, class: 'keyword' }
+        ],
+        json: [
+            { regex: /("(?:\\"|[^"])*")(?=\s*:)/g, class: 'attr' },
+            { regex: /(?<=:\s*)("(?:\\"|[^"])*")/g, class: 'string' },
+            { regex: /\b(true|false|null)\b/g, class: 'keyword' },
+            { regex: /\b(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\b/g, class: 'number' },
+            { regex: /([{}\[\],])/g, class: 'operator' }
+        ],
+        python: [
+            { regex: /("(?:\\"|[^"])*"|'(?:\\'|[^'])*'|"""[\s\S]*?"""|'''[\s\S]*?''')/g, class: 'string' },
+            { regex: /(#.*)/g, class: 'comment' },
+            { regex: /\b(def|class|if|elif|else|for|while|return|import|from|as|try|except|finally|with|pass|break|continue|yield|lambda|None|True|False|is|not|and|or|in)\b/g, class: 'keyword' },
+            { regex: /\b(\d+(?:\.\d+)?)\b/g, class: 'number' },
+            { regex: /([=+*\/%<>&|!?-]+)/g, class: 'operator' }
+        ]
+    };
 
-// ---------------------------------------------------------
-// EDITOR INITIALISATIE
-// ---------------------------------------------------------
-function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '') {
-    injectDialogs();
+    function tokenizeText(text, lang, searchQuery = '', useRegex = false) {
+        let escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-    const toolbar = typeof toolbarId === 'string' ? document.getElementById(toolbarId) : toolbarId;
-    if (!toolbar) return;
-    toolbar.classList.add('pulse-editor-toolbar');
+        if (lang && syntaxRules[lang]) {
+            const tokens = [];
+            const rules = syntaxRules[lang];
 
-    const editor = typeof editorId === 'string' ? document.getElementById(editorId) : editorId;
-    const sourceView = sourceId ? (typeof sourceId === 'string' ? document.getElementById(sourceId) : sourceId) : null;
-    if (sourceView) {
-        sourceView.classList.add('source-view');
+            rules.forEach(rule => {
+                escaped = escaped.replace(rule.regex, (match, p1) => {
+                    const id = `__PULSE_TOKEN_${tokens.length}__`;
+                    tokens.push(`<span class="token ${rule.class}">${p1 || match}</span>`);
+                    return id;
+                });
+            });
+
+            for (let i = tokens.length - 1; i >= 0; i--) {
+                escaped = escaped.replace(`__PULSE_TOKEN_${i}__`, tokens[i]);
+            }
+        }
+
+        if (searchQuery) {
+            try {
+                const flags = 'gi';
+                let regex = useRegex ? new RegExp(`(${searchQuery})`, flags) : new RegExp(`(${searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, flags);
+                const parts = escaped.split(/(<[^>]*>)/g);
+                for (let i = 0; i < parts.length; i++) {
+                    if (!parts[i].startsWith('<')) {
+                        parts[i] = parts[i].replace(regex, '<mark class="search-match">$1</mark>');
+                    }
+                }
+                escaped = parts.join('');
+            } catch (e) {}
+        }
+
+        const lines = escaped.split('\n');
+        return lines.map(line => `<div class="code-line">${line || '<br>'}</div>`).join('');
     }
-    let sourceMode = false;
 
-    // Code Editor State
-    let currentLang = '';
-    let searchQuery = '';
-    let useRegex = false;
+    // ---------------------------------------------------------
+    // PULSE EDITOR INSTANCE
+    // ---------------------------------------------------------
+    function initializePulseEditor(toolbarTarget, editorTarget, sourceTarget, optionsOrApiKey = {}) {
+        const instanceId = ++instanceCounter;
 
-    // UI Structure for Code Mode
-    const editorContainer = editor.parentElement;
-    const wrapper = document.createElement('div');
-    wrapper.className = 'editor-main-wrap';
-    editorContainer.insertBefore(wrapper, editor);
+        // Parse options
+        let options = {};
+        if (typeof optionsOrApiKey === 'string') {
+            options = { apiKey: optionsOrApiKey };
+        } else if (typeof optionsOrApiKey === 'object' && optionsOrApiKey !== null) {
+            options = { ...optionsOrApiKey };
+        }
 
-    const gutter = document.createElement('div');
-    gutter.className = 'pulse-gutter';
-    gutter.id = 'pulse-gutter';
-    gutter.style.display = 'none';
+        const apiKey = options.apiKey || (typeof window !== 'undefined' ? window.geminiApiKey : "") || "";
+        const theme = options.theme || 'auto';
+        const placeholder = options.placeholder || '';
+        const floatingMenuEnabled = options.floatingMenu !== false;
+        const statsEnabled = options.stats !== false;
 
-    wrapper.appendChild(gutter);
-    wrapper.appendChild(editor); // Move editor into wrapper
+        // Resolve Elements
+        const toolbar = typeof toolbarTarget === 'string' ? document.getElementById(toolbarTarget) : toolbarTarget;
+        const editor = typeof editorTarget === 'string' ? document.getElementById(editorTarget) : editorTarget;
+        const sourceView = sourceTarget ? (typeof sourceTarget === 'string' ? document.getElementById(sourceTarget) : sourceTarget) : null;
 
-    // Search Panel HTML
-    const searchPanelHTML = `
-        <div id="pulse-search-panel" class="pulse-search-panel" style="display: none;">
+        if (!editor) {
+            console.error('PulseEditor: Editor container element niet gevonden.');
+            return null;
+        }
+
+        if (toolbar) toolbar.classList.add('pulse-editor-toolbar');
+        editor.classList.add('editor-content-area');
+        if (placeholder) editor.setAttribute('placeholder', placeholder);
+
+        const container = editor.closest('.editor-container') || editor.parentElement;
+        if (container && !container.classList.contains('editor-container')) {
+            container.classList.add('editor-container');
+        }
+
+        if (sourceView) {
+            sourceView.classList.add('source-view');
+        }
+
+        // Apply theme
+        if (theme === 'dark') {
+            container.classList.add('pulse-theme-dark');
+        } else if (theme === 'light') {
+            container.classList.remove('pulse-theme-dark');
+        }
+
+        // Internal State
+        let sourceMode = false;
+        let currentLang = options.language || '';
+        let searchQuery = '';
+        let replaceQuery = '';
+        let useRegex = false;
+        let currentMatchIndex = 0;
+        let isDestroyed = false;
+        const eventListeners = new Map();
+
+        // ---------------------------------------------------------
+        // DOM Structure & Subcomponents Setup
+        // ---------------------------------------------------------
+        let wrapper = editor.parentElement.querySelector('.editor-main-wrap');
+        if (!wrapper) {
+            wrapper = document.createElement('div');
+            wrapper.className = 'editor-main-wrap';
+            editor.parentNode.insertBefore(wrapper, editor);
+            wrapper.appendChild(editor);
+        }
+
+        const gutter = document.createElement('div');
+        gutter.className = 'pulse-gutter';
+        gutter.id = `pulse-gutter-${instanceId}`;
+        gutter.style.display = 'none';
+        wrapper.insertBefore(gutter, editor);
+
+        // Search Panel
+        const searchPanel = document.createElement('div');
+        searchPanel.id = `pulse-search-${instanceId}`;
+        searchPanel.className = 'pulse-search-panel';
+        searchPanel.style.display = 'none';
+        searchPanel.innerHTML = `
             <div class="search-panel-row">
-                <input type="text" id="pulse-search-input" class="search-panel-input" placeholder="Search...">
-                <button id="pulse-search-prev" class="search-panel-btn">▲</button>
-                <button id="pulse-search-next" class="search-panel-btn">▼</button>
-                <button id="pulse-search-close" class="search-panel-close">×</button>
+                <input type="text" class="search-panel-input pulse-search-input" placeholder="Zoeken...">
+                <button type="button" class="search-panel-btn pulse-search-prev" title="Vorige match">▲</button>
+                <button type="button" class="search-panel-btn pulse-search-next" title="Volgende match">▼</button>
+                <button type="button" class="search-panel-close pulse-search-close" title="Sluiten">×</button>
             </div>
             <div class="search-panel-row">
-                <input type="text" id="pulse-replace-input" class="search-panel-input" placeholder="Replace with...">
-                <button id="pulse-replace-btn" class="search-panel-btn">Replace</button>
-                <button id="pulse-replace-all-btn" class="search-panel-btn">All</button>
+                <input type="text" class="search-panel-input pulse-replace-input" placeholder="Vervangen door...">
+                <button type="button" class="search-panel-btn pulse-replace-btn">Vervang</button>
+                <button type="button" class="search-panel-btn pulse-replace-all-btn">Alles</button>
             </div>
             <div class="search-panel-row" style="font-size: 0.85em;">
-                <label><input type="checkbox" id="pulse-search-regex"> Use RegExp</label>
-                <span id="pulse-search-count" style="margin-left: auto; color: #6c757d;">0/0</span>
+                <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer;">
+                    <input type="checkbox" class="pulse-search-regex"> RegExp
+                </label>
+                <span class="pulse-search-count" style="margin-left: auto; color: var(--pulse-text-muted);">0/0</span>
             </div>
-        </div>
-    `;
-    editorContainer.insertAdjacentHTML('beforeend', searchPanelHTML);
-    const searchPanel = document.getElementById('pulse-search-panel');
+        `;
+        container.appendChild(searchPanel);
 
-    if (editor.getAttribute('contenteditable') !== 'true') {
-        editor.setAttribute('contenteditable', 'true');
-    }
-    document.execCommand('defaultParagraphSeparator', false, 'p');
-
-    // Toolbar Configuratie
-    const commands = [
-        // Groep 1: AI Integratie (Aangepast & Presets)
-        {
-            type: 'dropdown',
-            mainButton: { svg: ICONS.magic, command: 'ai-custom', title: 'Vraag AI (Aangepast)', type: 'custom', class: 'btn-magic dropdown-main' },
-            items: [
-                { svg: ICONS.grammar, text: 'Grammatica', command: 'ai-grammar', title: 'Grammatica corrigeren (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
-                { svg: ICONS.translate, text: 'Vertalen', command: 'ai-translate', title: 'Vertalen (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
-                { svg: ICONS.summarize, text: 'Samenvatten', command: 'ai-summarize', title: 'Samenvatten (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
-                { svg: ICONS.professional, text: 'Professioneel', command: 'ai-professional', title: 'Professionele Toon (Selecteer eerst tekst)', type: 'custom', class: 'btn-ai-preset' },
-            ]
-        },
-        { divider: true },
-
-        // Groep 1.5: Tabellen
-        {
-            type: 'dropdown',
-            mainButton: { svg: ICONS.table, command: 'table-insert', title: 'Tabel Invoegen', type: 'custom' },
-            items: [
-                { svg: ICONS.table, text: 'Rij Boven Invoegen', command: 'table-insert-row-above', title: 'Rij Boven Invoegen', type: 'custom' },
-                { svg: ICONS.table, text: 'Rij Onder Invoegen', command: 'table-insert-row-below', title: 'Rij Onder Invoegen', type: 'custom' },
-                { svg: ICONS.table, text: 'Kolom Links Invoegen', command: 'table-insert-col-left', title: 'Kolom Links Invoegen', type: 'custom' },
-                { svg: ICONS.table, text: 'Kolom Rechts Invoegen', command: 'table-insert-col-right', title: 'Kolom Rechts Invoegen', type: 'custom' },
-                { svg: ICONS.table, text: 'Rij Verwijderen', command: 'table-delete-row', title: 'Rij Verwijderen', type: 'custom' },
-                { svg: ICONS.table, text: 'Kolom Verwijderen', command: 'table-delete-col', title: 'Kolom Verwijderen', type: 'custom' },
-                { svg: ICONS.table, text: 'Tabel Verwijderen', command: 'table-delete-table', title: 'Tabel Verwijderen', type: 'custom' },
-            ]
-        },
-        { divider: true },
-
-        // Groep 2: Basis Opmaak
-        { svg: ICONS.bold, command: 'bold', title: 'Vet', type: 'state' },
-        { svg: ICONS.italic, command: 'italic', title: 'Cursief', type: 'state' },
-        { svg: ICONS.underline, command: 'underline', title: 'Onderstreept', type: 'state' },
-        { svg: ICONS.strike, command: 'strikeThrough', title: 'Doorhaald', type: 'state' },
-        { divider: true },
-
-        // Groep 3: Koppen & Alinea's
-        { svg: ICONS.h1, command: 'formatBlock', value: 'H1', title: 'Kop 1', type: 'value' },
-        { svg: ICONS.h2, command: 'formatBlock', value: 'H2', title: 'Kop 2', type: 'value' },
-        { svg: ICONS.p, command: 'formatBlock', value: 'P', title: 'Alinea', type: 'value' },
-        { svg: ICONS.quote, command: 'formatBlock', value: 'BLOCKQUOTE', title: 'Citaat', type: 'value' },
-        { divider: true },
-
-        // Groep 4: Lijsten
-        { svg: ICONS.ul, command: 'insertUnorderedList', title: 'Opsommingslijst', type: 'state' },
-        { svg: ICONS.ol, command: 'insertOrderedList', title: 'Genummerde lijst', type: 'state' },
-        { divider: true },
-
-        // Groep 5: Uitlijning
-        { svg: ICONS.left, command: 'justifyLeft', title: 'Links uitlijnen', type: 'state' },
-        { svg: ICONS.center, command: 'justifyCenter', title: 'Centreren', type: 'state' },
-        { divider: true },
-
-        // Groep 6: Media & Hulpprogramma's
-        { svg: ICONS.link, command: 'createLink', title: 'Link maken', type: 'action' },
-        { svg: ICONS.unlink, command: 'unlink', title: 'Link verwijderen', type: 'action' },
-        { svg: ICONS.image, command: 'insertImage', title: 'Afbeelding invoegen', type: 'action' },
-        { svg: ICONS.color, command: 'foreColor', title: 'Tekstkleur', type: 'custom' },
-        { divider: true },
-        { svg: ICONS.undo, command: 'undo', title: 'Ongedaan maken', type: 'action' },
-        { divider: true },
-
-        // Groep 7: Markdown
-        {
-            type: 'dropdown',
-            mainButton: { svg: ICONS.markdown, command: 'markdown-import', title: 'Importeer Markdown', type: 'custom' },
-            items: [
-                { svg: ICONS.markdown, text: 'Importeer Markdown', command: 'markdown-import', title: 'Importeer Markdown', type: 'custom' },
-                { svg: ICONS.markdown, text: 'Exporteer Markdown', command: 'markdown-export', title: 'Exporteer Markdown', type: 'custom' }
-            ]
-        },
-        { svg: ICONS.code, command: 'insertCodeBlock', title: 'Codeblok Invoegen', type: 'custom' },
-        { divider: true },
-        { svg: ICONS.maximize, command: 'toggleFullscreen', title: 'Volledig Scherm', type: 'action' },
-        // Only include toggleSource if sourceView exists
-        ...(sourceView ? [{ svg: ICONS.code, command: 'toggleSource', title: 'Broncode bekijken', type: 'action' }] : [])
-    ];
-
-    const createButton = (config) => {
-        if (config.divider) {
-            const divider = document.createElement('span');
-            divider.className = 'toolbar-divider';
-            return divider;
+        // Floating Bubble Selection Toolbar
+        let floatingToolbar = null;
+        if (floatingMenuEnabled) {
+            floatingToolbar = document.createElement('div');
+            floatingToolbar.className = 'pulse-floating-toolbar';
+            floatingToolbar.innerHTML = `
+                <button type="button" class="btn" data-command="bold" title="Vet">${ICONS.bold}</button>
+                <button type="button" class="btn" data-command="italic" title="Cursief">${ICONS.italic}</button>
+                <button type="button" class="btn" data-command="underline" title="Onderstreept">${ICONS.underline}</button>
+                <button type="button" class="btn" data-command="createLink" title="Link">${ICONS.link}</button>
+                <span class="toolbar-divider"></span>
+                <button type="button" class="btn btn-magic" data-command="ai-custom" title="Vraag AI">${ICONS.magic}<span>AI</span></button>
+            `;
+            container.appendChild(floatingToolbar);
         }
 
-        if (config.type === 'dropdown') {
-            const dropdownContainer = document.createElement('div');
-            dropdownContainer.className = 'pulse-editor-dropdown';
+        // Status Bar
+        let statusBar = null;
+        if (statsEnabled) {
+            statusBar = document.createElement('div');
+            statusBar.className = 'pulse-status-bar';
+            statusBar.innerHTML = `
+                <div class="pulse-status-stats">
+                    <span class="pulse-stat-words">0 woorden</span>
+                    <span class="pulse-stat-chars">0 tekens</span>
+                    <span class="pulse-stat-reading">0 min leestijd</span>
+                </div>
+                <div class="pulse-status-info">
+                    <span class="pulse-status-badge pulse-mode-badge">${currentLang ? currentLang.toUpperCase() : 'Rich Text'}</span>
+                </div>
+            `;
+            container.appendChild(statusBar);
+        }
 
-            const buttonGroup = document.createElement('div');
-            buttonGroup.className = 'pulse-editor-dropdown-group';
+        if (editor.getAttribute('contenteditable') !== 'true') {
+            editor.setAttribute('contenteditable', 'true');
+        }
+        document.execCommand('defaultParagraphSeparator', false, 'p');
 
-            const mainBtnConfig = config.mainButton;
-            const mainButton = document.createElement('button');
-            mainButton.type = 'button';
-            mainButton.className = mainBtnConfig.class ? `btn ${mainBtnConfig.class}` : 'btn btn-light';
-            mainButton.title = mainBtnConfig.title;
-            mainButton.dataset.command = mainBtnConfig.command;
+        // ---------------------------------------------------------
+        // TOOLBAR COMMANDS CONFIGURATION
+        // ---------------------------------------------------------
+        const defaultCommands = [
+            // Group 1: Generative AI Assistant
+            {
+                type: 'dropdown',
+                mainButton: { svg: ICONS.magic, command: 'ai-custom', title: 'Vraag AI Assistent', type: 'custom', class: 'btn-magic dropdown-main', text: 'AI' },
+                items: [
+                    { svg: ICONS.grammar, text: 'Grammatica & Spelling', command: 'ai-grammar', title: 'Verbeter grammatica en spelling', type: 'custom', class: 'btn-ai-preset' },
+                    { svg: ICONS.expand, text: 'Tekst Uitbreiden', command: 'ai-expand', title: 'Breid korte tekst uit naar een alinea', type: 'custom', class: 'btn-ai-preset' },
+                    { svg: ICONS.tone, text: 'Toon Wijzigen...', command: 'ai-tone', title: 'Pas schrijfstijl of toon aan', type: 'custom', class: 'btn-ai-preset' },
+                    { svg: ICONS.summarize, text: 'Samenvatten', command: 'ai-summarize', title: 'Vat geselecteerde tekst samen', type: 'custom', class: 'btn-ai-preset' },
+                    { svg: ICONS.translate, text: 'Vertalen...', command: 'ai-translate', title: 'Vertaal naar een andere taal', type: 'custom', class: 'btn-ai-preset' },
+                    { svg: ICONS.seo, text: 'SEO Suggesties', command: 'ai-seo', title: 'Optimaliseer voor zoekmachines', type: 'custom', class: 'btn-ai-preset' },
+                    { svg: ICONS.tags, text: 'Tags & Categorieën', command: 'ai-tags', title: 'Genereer tags en categorieën', type: 'custom', class: 'btn-ai-preset' }
+                ]
+            },
+            { divider: true },
 
-            let mainInnerContent = mainBtnConfig.svg;
-            if (mainBtnConfig.text) mainInnerContent += `<span>${mainBtnConfig.text}</span>`;
-            mainButton.innerHTML = mainInnerContent;
+            // Group 2: Basic Formatting
+            { svg: ICONS.bold, command: 'bold', title: 'Vet (Ctrl+B)', type: 'state' },
+            { svg: ICONS.italic, command: 'italic', title: 'Cursief (Ctrl+I)', type: 'state' },
+            { svg: ICONS.underline, command: 'underline', title: 'Onderstreept (Ctrl+U)', type: 'state' },
+            { svg: ICONS.strike, command: 'strikeThrough', title: 'Doorhalen', type: 'state' },
+            { divider: true },
 
-            mainButton.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                handleToolbarClick(mainButton, mainBtnConfig);
-            });
+            // Group 3: Headings & Paragraphs
+            { svg: ICONS.h1, command: 'formatBlock', value: 'H1', title: 'Kop 1 (H1)', type: 'value' },
+            { svg: ICONS.h2, command: 'formatBlock', value: 'H2', title: 'Kop 2 (H2)', type: 'value' },
+            { svg: ICONS.h3, command: 'formatBlock', value: 'H3', title: 'Kop 3 (H3)', type: 'value' },
+            { svg: ICONS.p, command: 'formatBlock', value: 'P', title: 'Paragraaf', type: 'value' },
+            { svg: ICONS.quote, command: 'formatBlock', value: 'BLOCKQUOTE', title: 'Citaat (Blockquote)', type: 'value' },
+            { divider: true },
 
-            const toggleButton = document.createElement('button');
-            toggleButton.type = 'button';
-            toggleButton.className = 'btn btn-dropdown-toggle';
-            toggleButton.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+            // Group 4: Lists & Alignment
+            { svg: ICONS.ul, command: 'insertUnorderedList', title: 'Opsommingslijst', type: 'state' },
+            { svg: ICONS.ol, command: 'insertOrderedList', title: 'Genummerde lijst', type: 'state' },
+            { svg: ICONS.left, command: 'justifyLeft', title: 'Links uitlijnen', type: 'state' },
+            { svg: ICONS.center, command: 'justifyCenter', title: 'Centreren', type: 'state' },
+            { svg: ICONS.right, command: 'justifyRight', title: 'Rechts uitlijnen', type: 'state' },
+            { divider: true },
 
-            const dropdownContent = document.createElement('div');
-            dropdownContent.className = 'pulse-editor-dropdown-content';
+            // Group 5: Insertions (Link, Image, Table, Code Block)
+            { svg: ICONS.link, command: 'createLink', title: 'Link invoegen (Ctrl+K)', type: 'action' },
+            { svg: ICONS.unlink, command: 'unlink', title: 'Link verwijderen', type: 'action' },
+            { svg: ICONS.image, command: 'insertImage', title: 'Afbeelding invoegen', type: 'action' },
+            {
+                type: 'dropdown',
+                mainButton: { svg: ICONS.table, command: 'table-insert', title: 'Tabel Invoegen', type: 'custom' },
+                items: [
+                    { svg: ICONS.table, text: 'Tabel Invoegen (3x3)', command: 'table-insert', title: 'Tabel Invoegen', type: 'custom' },
+                    { svg: ICONS.table, text: 'Rij Boven Invoegen', command: 'table-insert-row-above', title: 'Rij Boven Invoegen', type: 'custom' },
+                    { svg: ICONS.table, text: 'Rij Onder Invoegen', command: 'table-insert-row-below', title: 'Rij Onder Invoegen', type: 'custom' },
+                    { svg: ICONS.table, text: 'Kolom Links Invoegen', command: 'table-insert-col-left', title: 'Kolom Links Invoegen', type: 'custom' },
+                    { svg: ICONS.table, text: 'Kolom Rechts Invoegen', command: 'table-insert-col-right', title: 'Kolom Rechts Invoegen', type: 'custom' },
+                    { svg: ICONS.table, text: 'Rij Verwijderen', command: 'table-delete-row', title: 'Rij Verwijderen', type: 'custom' },
+                    { svg: ICONS.table, text: 'Kolom Verwijderen', command: 'table-delete-col', title: 'Kolom Verwijderen', type: 'custom' },
+                    { svg: ICONS.table, text: 'Tabel Verwijderen', command: 'table-delete-table', title: 'Tabel Verwijderen', type: 'custom' }
+                ]
+            },
+            { svg: ICONS.code, command: 'insertCodeBlock', title: 'Codeblok Invoegen', type: 'custom' },
+            { svg: ICONS.color, command: 'foreColor', title: 'Tekstkleur', type: 'custom' },
+            { svg: ICONS.hr, command: 'insertHorizontalRule', title: 'Horizontale lijn', type: 'action' },
+            { svg: ICONS.clear, command: 'removeFormat', title: 'Opmaak wissen', type: 'action' },
+            { divider: true },
 
-            config.items.forEach(itemConfig => {
-                const itemBtn = document.createElement('button');
-                itemBtn.type = 'button';
-                itemBtn.className = itemConfig.class ? `btn ${itemConfig.class}` : 'btn btn-light';
-                itemBtn.title = itemConfig.title;
-                itemBtn.dataset.command = itemConfig.command;
+            // Group 6: History & Utilities
+            { svg: ICONS.undo, command: 'undo', title: 'Ongedaan maken (Ctrl+Z)', type: 'action' },
+            { svg: ICONS.redo, command: 'redo', title: 'Opnieuw uitvoeren (Ctrl+Y)', type: 'action' },
+            { divider: true },
 
-                let itemInnerContent = itemConfig.svg;
-                if (itemConfig.text) itemInnerContent += `<span>${itemConfig.text}</span>`;
-                itemBtn.innerHTML = itemInnerContent;
+            // Group 7: Markdown & Search & Theme
+            {
+                type: 'dropdown',
+                mainButton: { svg: ICONS.markdown, command: 'markdown-import', title: 'Markdown Import / Export', type: 'custom' },
+                items: [
+                    { svg: ICONS.markdown, text: 'Importeer Markdown', command: 'markdown-import', title: 'Markdown importeren', type: 'custom' },
+                    { svg: ICONS.markdown, text: 'Exporteer Markdown', command: 'markdown-export', title: 'Als Markdown kopiëren/exporteren', type: 'custom' }
+                ]
+            },
+            { svg: ICONS.search, command: 'toggleSearch', title: 'Zoeken & Vervangen (Ctrl+F)', type: 'action' },
+            { svg: ICONS.theme, command: 'toggleTheme', title: 'Thema Wisselen (Licht/Donker)', type: 'action' },
+            { svg: ICONS.help, command: 'showShortcuts', title: 'Sneltoetsen (Ctrl+/)', type: 'action' },
+            { svg: ICONS.maximize, command: 'toggleFullscreen', title: 'Volledig Scherm', type: 'action' },
+            ...(sourceView ? [{ svg: ICONS.code, command: 'toggleSource', title: 'HTML Broncode bekijken', type: 'action' }] : [])
+        ];
 
-                itemBtn.addEventListener('mousedown', (e) => {
+        const commands = options.buttons ? options.buttons : defaultCommands;
+
+        // ---------------------------------------------------------
+        // TOOLBAR BUTTON CREATOR
+        // ---------------------------------------------------------
+        const createButton = (config) => {
+            if (config.divider) {
+                const divider = document.createElement('span');
+                divider.className = 'toolbar-divider';
+                return divider;
+            }
+
+            if (config.type === 'dropdown') {
+                const dropdownContainer = document.createElement('div');
+                dropdownContainer.className = 'pulse-editor-dropdown';
+
+                const buttonGroup = document.createElement('div');
+                buttonGroup.className = 'pulse-editor-dropdown-group';
+
+                const mainBtnConfig = config.mainButton;
+                const mainButton = document.createElement('button');
+                mainButton.type = 'button';
+                mainButton.className = mainBtnConfig.class ? `btn ${mainBtnConfig.class}` : 'btn';
+                mainButton.title = mainBtnConfig.title;
+                mainButton.dataset.command = mainBtnConfig.command;
+
+                let mainContent = mainBtnConfig.svg;
+                if (mainBtnConfig.text) mainContent += `<span>${mainBtnConfig.text}</span>`;
+                mainButton.innerHTML = mainContent;
+
+                mainButton.addEventListener('mousedown', (e) => {
                     e.preventDefault();
-                    handleToolbarClick(itemBtn, itemConfig);
+                    handleCommand(mainBtnConfig.command, mainBtnConfig);
+                });
+
+                const toggleButton = document.createElement('button');
+                toggleButton.type = 'button';
+                toggleButton.className = 'btn btn-dropdown-toggle';
+                toggleButton.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>';
+
+                const dropdownContent = document.createElement('div');
+                dropdownContent.className = 'pulse-editor-dropdown-content';
+
+                config.items.forEach(itemConfig => {
+                    const itemBtn = document.createElement('button');
+                    itemBtn.type = 'button';
+                    itemBtn.className = itemConfig.class ? `btn ${itemConfig.class}` : 'btn';
+                    itemBtn.title = itemConfig.title;
+                    itemBtn.dataset.command = itemConfig.command;
+
+                    let itemContent = itemConfig.svg;
+                    if (itemConfig.text) itemContent += `<span>${itemConfig.text}</span>`;
+                    itemBtn.innerHTML = itemContent;
+
+                    itemBtn.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        dropdownContent.classList.remove('show');
+                        handleCommand(itemConfig.command, itemConfig);
+                    });
+                    dropdownContent.appendChild(itemBtn);
+                });
+
+                toggleButton.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isShown = dropdownContent.classList.contains('show');
+                    document.querySelectorAll('.pulse-editor-dropdown-content.show').forEach(d => d.classList.remove('show'));
+                    if (!isShown) dropdownContent.classList.add('show');
+                });
+
+                document.addEventListener('click', () => {
                     dropdownContent.classList.remove('show');
                 });
-                dropdownContent.appendChild(itemBtn);
-            });
 
-            toggleButton.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdownContent.classList.toggle('show');
-            });
+                buttonGroup.appendChild(mainButton);
+                buttonGroup.appendChild(toggleButton);
+                dropdownContainer.appendChild(buttonGroup);
+                dropdownContainer.appendChild(dropdownContent);
+                return dropdownContainer;
+            }
 
-            document.addEventListener('click', () => {
-                dropdownContent.classList.remove('show');
-            });
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = config.class ? `btn ${config.class}` : 'btn';
+            button.title = config.title;
+            button.dataset.command = config.command;
+            if (config.value) button.dataset.value = config.value;
 
-            buttonGroup.appendChild(mainButton);
-            buttonGroup.appendChild(toggleButton);
-            dropdownContainer.appendChild(buttonGroup);
-            dropdownContainer.appendChild(dropdownContent);
+            let content = config.svg;
+            if (config.text) content += `<span>${config.text}</span>`;
+            button.innerHTML = content;
 
-            return dropdownContainer;
+            if (config.command === 'foreColor') {
+                const colorInput = document.createElement('input');
+                colorInput.type = 'color';
+                colorInput.style.position = 'absolute';
+                colorInput.style.opacity = '0';
+                colorInput.style.width = '1px';
+                colorInput.style.height = '1px';
+                colorInput.style.pointerEvents = 'none';
+
+                button.style.position = 'relative';
+                button.appendChild(colorInput);
+
+                colorInput.addEventListener('input', (e) => {
+                    editor.focus();
+                    document.execCommand('foreColor', false, e.target.value);
+                    syncContent();
+                });
+
+                button.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    if (!sourceMode) colorInput.click();
+                });
+            } else {
+                button.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    handleCommand(config.command, config);
+                });
+            }
+
+            return button;
+        };
+
+        if (toolbar) {
+            toolbar.innerHTML = '';
+            commands.forEach(cmd => toolbar.appendChild(createButton(cmd)));
         }
 
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = config.class ? `btn ${config.class}` : 'btn btn-light';
-        button.title = config.title;
-        button.dataset.command = config.command;
-        if (config.value) button.dataset.value = config.value;
-
-        let innerContent = config.svg;
-        if (config.text) innerContent += `<span>${config.text}</span>`;
-        button.innerHTML = innerContent;
-
-        if (config.command === 'foreColor') {
-            const colorInput = document.createElement('input');
-            colorInput.type = 'color';
-            colorInput.className = 'pulse-editor-color-input';
-            colorInput.style.position = 'absolute';
-            colorInput.style.opacity = '0';
-            colorInput.style.width = '1px';
-            colorInput.style.height = '1px';
-            colorInput.style.pointerEvents = 'none';
-
-            button.style.position = 'relative';
-            button.appendChild(colorInput);
-
-            colorInput.addEventListener('input', (e) => {
-                editor.focus();
-                document.execCommand('foreColor', false, e.target.value);
-            });
-            colorInput.addEventListener('click', (e) => e.stopPropagation());
-
-            button.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                if (!sourceMode) colorInput.click();
-            });
-        } else {
-            button.addEventListener('mousedown', (e) => {
-                e.preventDefault();
-                handleToolbarClick(button, config);
+        // Setup Floating Toolbar Events
+        if (floatingToolbar) {
+            floatingToolbar.querySelectorAll('.btn').forEach(btn => {
+                btn.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const cmd = btn.dataset.command;
+                    handleCommand(cmd, { command: cmd });
+                });
             });
         }
 
-        return button;
-    };
-
-    const handleToolbarClick = async (button, config) => {
-        const command = config.command;
-
-        if (command === 'toggleFullscreen') {
-            const container = editor.closest('.editor-container');
-            if (container) {
+        // ---------------------------------------------------------
+        // COMMAND HANDLER
+        // ---------------------------------------------------------
+        const handleCommand = async (command, config = {}) => {
+            if (command === 'toggleFullscreen') {
                 container.classList.toggle('fullscreen-mode');
                 const isFullscreen = container.classList.contains('fullscreen-mode');
-                button.innerHTML = isFullscreen ? ICONS.minimize : ICONS.maximize;
-                button.title = isFullscreen ? 'Sluiten Volledig Scherm' : 'Volledig Scherm';
-            }
-            return;
-        }
-
-        if (command === 'toggleSource') {
-            toggleSourceView(button);
-            return;
-        }
-
-        if (sourceMode) return;
-
-        // Selectie ophalen vóór async acties
-        const selection = window.getSelection();
-        let savedRange = null;
-        let selectedHtml = "";
-
-        if (selection.rangeCount > 0 && editor.contains(selection.getRangeAt(0).commonAncestorContainer)) {
-            savedRange = selection.getRangeAt(0);
-
-            if (selection.toString().trim() !== "") {
-                const tempDiv = document.createElement("div");
-                tempDiv.appendChild(savedRange.cloneContents());
-                selectedHtml = tempDiv.innerHTML;
-            }
-        }
-
-        // AI Commando Afhandeling
-        if (command.startsWith('ai-')) {
-            let finalPrompt = "";
-
-            if (command === 'ai-custom') {
-                const instruction = await askInput(
-                    'Vraag AI Assistent',
-                    'bijv. Maak het enthousiast',
-                    '',
-                    selectedHtml ? `Bewerkt geselecteerde tekst.` : 'Genereert nieuwe tekst op cursorpositie'
-                );
-                if (!instruction) return;
-                finalPrompt = selectedHtml
-                    ? `Instruction: ${instruction}\n\nCRITICAL: Keep the exact same HTML structure. Do not nest tags that were not nested in the input. Do not add wrapping tags. Input HTML:\n\n${selectedHtml}`
-                    : `Instruction: ${instruction}\n\n(Write a concise response suitable for immediate insertion.)`;
-            } else {
-                // Preset Commando's
-                if (!selectedHtml) {
-                    showMessage('Melding', 'Selecteer eerst wat tekst om deze AI-tool te gebruiken.');
-                    return;
+                const btn = toolbar ? toolbar.querySelector('button[data-command="toggleFullscreen"]') : null;
+                if (btn) {
+                    btn.innerHTML = isFullscreen ? ICONS.minimize : ICONS.maximize;
+                    btn.title = isFullscreen ? 'Sluiten Volledig Scherm' : 'Volledig Scherm';
                 }
+                return;
+            }
 
-                // Strikte prompt formulering om HTML te behouden
-                if (command === 'ai-grammar') {
-                    finalPrompt = `Fix spelling and grammar errors. CRITICAL: Output the exact same HTML structure. Do NOT add any wrapper tags around the result. Input HTML:\n\n${selectedHtml}`;
-                } else if (command === 'ai-summarize') {
-                    finalPrompt = `Summarize this content. Retain inline HTML structure like <b> or <i>. Keep root elements like <p> intact. Do NOT add any wrapper tags around the result. Input HTML:\n\n${selectedHtml}`;
-                } else if (command === 'ai-professional') {
-                    finalPrompt = `Rewrite this to have a professional business tone. CRITICAL: Output the exact same HTML structure. Do NOT add any wrapper tags around the result. Input HTML:\n\n${selectedHtml}`;
-                } else if (command === 'ai-translate') {
-                    const targetLang = await askInput(
-                        'Vertalen naar',
-                        'bijv. Engels, Frans, Spaans',
-                        'Engels',
-                        'Voer de taal in waarnaar u de geselecteerde tekst wilt vertalen.'
-                    );
-                    if (!targetLang) return;
-                    finalPrompt = `Translate the human-readable text into ${targetLang}. CRITICAL: Output the exact same HTML structure. Do NOT add any wrapper tags (like an extra <h2> or <div>) around the result. Input HTML:\n\n${selectedHtml}`;
+            if (command === 'toggleTheme') {
+                container.classList.toggle('pulse-theme-dark');
+                triggerEvent('themeChange', { isDark: container.classList.contains('pulse-theme-dark') });
+                return;
+            }
+
+            if (command === 'showShortcuts') {
+                await Dialogs.showShortcuts();
+                return;
+            }
+
+            if (command === 'toggleSearch') {
+                const isHidden = searchPanel.style.display === 'none';
+                searchPanel.style.display = isHidden ? 'flex' : 'none';
+                if (isHidden) {
+                    const searchInp = searchPanel.querySelector('.pulse-search-input');
+                    searchInp.focus();
+                    const sel = window.getSelection().toString();
+                    if (sel) {
+                        searchInp.value = sel;
+                        searchQuery = sel;
+                        updateSearch();
+                    }
+                }
+                return;
+            }
+
+            if (command === 'toggleSource') {
+                toggleSourceView();
+                return;
+            }
+
+            if (sourceMode) return;
+
+            // Capture current selection before modal dialogs
+            const selection = window.getSelection();
+            let savedRange = null;
+            let selectedHtml = "";
+            let selectedText = "";
+
+            if (selection.rangeCount > 0 && editor.contains(selection.getRangeAt(0).commonAncestorContainer)) {
+                savedRange = selection.getRangeAt(0);
+                selectedText = selection.toString();
+                if (selectedText) {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.appendChild(savedRange.cloneContents());
+                    selectedHtml = tempDiv.innerHTML;
                 }
             }
 
-            // Laden status instellen
-            const originalContent = button.innerHTML;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true" style="margin-right: 4px;"></span>' + (config.text ? `<span>${config.text}</span>` : '');
-            button.disabled = true;
-
-            try {
-                let aiResult = await callGeminiAPI(finalPrompt, geminiApiKey);
-
-                // Markdown blokken verwijderen die de AI soms genereert
-                aiResult = aiResult.replace(/^\`{3}[a-z]*\n?/im, '').replace(/\`{3}\n?$/im, '').trim();
-
+            // Restore selection helper
+            const restoreSelection = () => {
                 editor.focus();
                 if (savedRange) {
                     selection.removeAllRanges();
                     selection.addRange(savedRange);
                 }
-                // document.execCommand vervangt het perfect zonder de DOM-scope te breken
-                document.execCommand('insertHTML', false, aiResult);
-            } catch (err) {
-                showMessage('AI Fout', err.message);
-            } finally {
-                button.innerHTML = originalContent;
-                button.disabled = false;
-                updateToolbarState();
-            }
-            return;
-        }
+            };
 
-        // Markdown Acties
-        if (command === 'markdown-import') {
-            const markdownText = await askTextarea('Importeer Markdown', 'Plak uw Markdown hier...', '');
-            if (markdownText) {
-                if (typeof marked === 'undefined') {
-                    await new Promise((resolve, reject) => {
-                        const script = document.createElement('script');
-                        script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-                        script.onload = resolve;
-                        script.onerror = reject;
-                        document.head.appendChild(script);
-                    });
-                }
-                const html = marked.parse(markdownText);
-                editor.focus();
-                if (savedRange) { selection.removeAllRanges(); selection.addRange(savedRange); }
-                document.execCommand('insertHTML', false, html);
-                updateToolbarState();
-            }
-            return;
-        }
+            // AI COMMANDS
+            if (command.startsWith('ai-')) {
+                let prompt = "";
+                let loadingBtn = toolbar ? toolbar.querySelector(`button[data-command="${command}"]`) : null;
 
-        if (command === 'markdown-export') {
-            if (typeof TurndownService === 'undefined') {
-                await new Promise((resolve, reject) => {
-                    const script = document.createElement('script');
-                    script.src = 'https://unpkg.com/turndown/dist/turndown.js';
-                    script.onload = resolve;
-                    script.onerror = reject;
-                    document.head.appendChild(script);
-                });
-            }
-            const turndownService = new TurndownService();
-            const markdown = turndownService.turndown(editor.innerHTML);
-            await askTextarea('Exporteer Markdown', '', markdown, 'Kopieer de Markdown hieronder.');
-            return;
-        }
-
-        // Code Blokken Acties
-        if (command === 'insertCodeBlock') {
-            const lang = await askInput('Programmeertaal', 'bijv. javascript, python, html', 'javascript');
-            if (lang) {
-                const code = await askTextarea('Code Invoegen', 'Plak uw code hier...', '');
-                if (code) {
-                    if (typeof hljs === 'undefined') {
-                        await new Promise((resolve, reject) => {
-                            const link = document.createElement('link');
-                            link.rel = 'stylesheet';
-                            link.href = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css';
-                            document.head.appendChild(link);
-
-                            const script = document.createElement('script');
-                            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js';
-                            script.onload = resolve;
-                            script.onerror = reject;
-                            document.head.appendChild(script);
-                        });
+                if (command === 'ai-custom') {
+                    const instruction = await Dialogs.askInput(
+                        'Vraag AI Assistent',
+                        'bijv. Maak de tekst wervend en bondig...',
+                        '',
+                        selectedHtml ? 'Bewerkt de geselecteerde tekst.' : 'Genereert nieuwe tekst op cursorpositie.'
+                    );
+                    if (!instruction) return;
+                    prompt = selectedHtml
+                        ? `Instruction: ${instruction}\n\nMaintain exact HTML markup tags. Input HTML:\n${selectedHtml}`
+                        : `Instruction: ${instruction}\n\nWrite a well-formatted response ready to insert into the document.`;
+                } else if (command === 'ai-grammar') {
+                    if (!selectedHtml) {
+                        await Dialogs.showMessage('Selectie Vereist', 'Selecteer eerst tekst om spelling en grammatica te corrigeren.');
+                        return;
                     }
-
-                    // Escape HTML om onbedoelde uitvoering in de DOM te voorkomen
-                    const escapeHtml = (text) => {
-                        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-                        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
-                    };
-
-                    const safeCode = escapeHtml(code);
-                    const html = `<pre style="background: #f4f4f4; padding: 1rem; border-radius: 4px; overflow-x: auto; margin-bottom: 1rem;"><code class="language-${lang}">${safeCode}</code></pre><p><br></p>`;
-                    editor.focus();
-                    if (savedRange) { selection.removeAllRanges(); selection.addRange(savedRange); }
-                    document.execCommand('insertHTML', false, html);
-
-                    // Laat Highlight.js het nieuwe blok verwerken
-                    document.querySelectorAll('pre code').forEach((block) => {
-                        hljs.highlightElement(block);
-                    });
+                    prompt = `Fix all spelling, grammar, and punctuation mistakes. Retain exact HTML markup and attributes. Input HTML:\n${selectedHtml}`;
+                } else if (command === 'ai-expand') {
+                    if (!selectedHtml) {
+                        await Dialogs.showMessage('Selectie Vereist', 'Selecteer een zin of gedachte om uit te breiden.');
+                        return;
+                    }
+                    prompt = `Expand this short text into a well-crafted, coherent, and comprehensive paragraph. Maintain existing HTML structure. Input HTML:\n${selectedHtml}`;
+                } else if (command === 'ai-tone') {
+                    if (!selectedHtml) {
+                        await Dialogs.showMessage('Selectie Vereist', 'Selecteer eerst tekst om de schrijfstijl/toon aan te passen.');
+                        return;
+                    }
+                    const selectedTone = await Dialogs.askSelect(
+                        'Schrijfstijl / Toon Kiezen',
+                        [
+                            { value: 'Professioneel & Zakelijk', label: 'Professioneel & Zakelijk' },
+                            { value: 'Informeel & Vriendelijk', label: 'Informeel & Vriendelijk' },
+                            { value: 'Overtuigend & Wervend (Sales/Marketing)', label: 'Overtuigend & Wervend' },
+                            { value: 'Academisch & Formeel', label: 'Academisch & Formeel' },
+                            { value: 'Beknopt & To-the-point', label: 'Beknopt & Krachtig' },
+                            { value: 'Creatief & Inspirerend', label: 'Creatief & Inspirerend' }
+                        ],
+                        'Professioneel & Zakelijk'
+                    );
+                    if (!selectedTone) return;
+                    prompt = `Rewrite this text in a ${selectedTone} tone. Maintain the exact same HTML formatting tags. Input HTML:\n${selectedHtml}`;
+                } else if (command === 'ai-summarize') {
+                    const textToSummarize = selectedHtml || editor.innerHTML;
+                    prompt = `Summarize this text clearly and concisely. Format key points using an unordered list (<ul><li>...) or clear paragraphs. Input HTML:\n${textToSummarize}`;
+                } else if (command === 'ai-translate') {
+                    if (!selectedHtml) {
+                        await Dialogs.showMessage('Selectie Vereist', 'Selecteer eerst tekst om te vertalen.');
+                        return;
+                    }
+                    const targetLang = await Dialogs.askSelect(
+                        'Vertalen Naar Taal',
+                        ['Engels', 'Nederlands', 'Duits', 'Frans', 'Spaans', 'Italiaans', 'Portugees', 'Chinees', 'Japans', 'Arabisch'],
+                        'Engels'
+                    );
+                    if (!targetLang) return;
+                    prompt = `Translate the human-readable text into ${targetLang}. Keep all HTML tags and structural markup intact. Input HTML:\n${selectedHtml}`;
+                } else if (command === 'ai-seo') {
+                    const content = selectedText || editor.innerText;
+                    prompt = `Analyze this text for SEO and provide 4 practical suggestions: 1) Optimized Title (H1), 2) Meta Description (under 160 chars), 3) Focus Keywords, 4) Content Improvements. Format as clean HTML with <h4> and <ul>. Input text:\n${content}`;
+                    const res = await callGeminiAPI(prompt, apiKey);
+                    await Dialogs.showMessage('SEO Analyse & Suggesties', `<div style="max-height: 400px; overflow-y: auto;">${res}</div>`);
+                    return;
+                } else if (command === 'ai-tags') {
+                    const content = selectedText || editor.innerText;
+                    prompt = `Suggest 5-8 relevant tags and 2 categories for this document. Format as HTML badge spans like: <span style="display:inline-block;background:#eef2ff;color:#4f46e5;padding:2px 8px;border-radius:12px;margin:2px;font-size:0.85em;">#tag</span>. Input text:\n${content}`;
+                    const res = await callGeminiAPI(prompt, apiKey);
+                    restoreSelection();
+                    document.execCommand('insertHTML', false, `<p><strong>Tags:</strong> ${res}</p>`);
+                    syncContent();
+                    return;
                 }
-            }
-            updateToolbarState();
-            return;
-        }
 
-        // Tabel Acties
-        if (command.startsWith('table-')) {
-            editor.focus();
-            if (savedRange) {
-                selection.removeAllRanges();
-                selection.addRange(savedRange);
+                let origBtnHtml = "";
+                if (loadingBtn) {
+                    origBtnHtml = loadingBtn.innerHTML;
+                    loadingBtn.innerHTML = '<span class="pulse-ai-loading" style="display:inline-block;width:16px;height:16px;border-radius:50%;"></span>';
+                    loadingBtn.disabled = true;
+                }
+                editor.classList.add('pulse-ai-loading');
+
+                try {
+                    const aiResult = await callGeminiAPI(prompt, apiKey);
+                    restoreSelection();
+                    document.execCommand('insertHTML', false, aiResult);
+                    syncContent();
+                } catch (err) {
+                    await Dialogs.showMessage('AI Assistent Fout', err.message);
+                } finally {
+                    editor.classList.remove('pulse-ai-loading');
+                    if (loadingBtn) {
+                        loadingBtn.innerHTML = origBtnHtml;
+                        loadingBtn.disabled = false;
+                    }
+                    updateToolbarState();
+                }
+                return;
             }
 
-            if (command === 'table-insert') {
-                const tableHtml = '<table class="pulse-table" border="1" style="border-collapse: collapse; width: 100%; margin-bottom: 1rem;"><tbody><tr><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td></tr></tbody></table><p><br></p>';
-                document.execCommand('insertHTML', false, tableHtml);
-            } else {
+            // MARKDOWN COMMANDS
+            if (command === 'markdown-import') {
+                const mdText = await Dialogs.askTextarea('Importeer Markdown', '# Koptekst\n\nPlak hier uw Markdown...');
+                if (mdText) {
+                    if (typeof marked === 'undefined') {
+                        await loadExternalScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+                    }
+                    const parsedHtml = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(mdText) : mdText.replace(/\n/g, '<br>');
+                    restoreSelection();
+                    document.execCommand('insertHTML', false, parsedHtml);
+                    syncContent();
+                }
+                return;
+            }
+
+            if (command === 'markdown-export') {
+                if (typeof TurndownService === 'undefined') {
+                    await loadExternalScript('https://unpkg.com/turndown/dist/turndown.js');
+                }
+                let markdown = "";
+                if (typeof TurndownService !== 'undefined') {
+                    const td = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+                    markdown = td.turndown(editor.innerHTML);
+                } else {
+                    markdown = editor.innerText;
+                }
+                await Dialogs.askTextarea('Exporteer Markdown', '', markdown, 'Kopieer de onderstaande Markdown.');
+                return;
+            }
+
+            // CODE BLOCK INSERTION
+            if (command === 'insertCodeBlock') {
+                const lang = await Dialogs.askSelect(
+                    'Programmeertaal voor Codeblok',
+                    ['javascript', 'html', 'css', 'php', 'python', 'json', 'sql', 'typescript', 'bash'],
+                    'javascript'
+                );
+                if (lang) {
+                    const code = await Dialogs.askTextarea('Code Invoegen', '// Plak hier uw code...');
+                    if (code) {
+                        const escapedCode = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                        const blockHtml = `<pre><code class="language-${lang}">${escapedCode}</code></pre><p><br></p>`;
+                        restoreSelection();
+                        document.execCommand('insertHTML', false, blockHtml);
+                        syncContent();
+                    }
+                }
+                return;
+            }
+
+            // TABLE COMMANDS
+            if (command.startsWith('table-')) {
+                restoreSelection();
+                if (command === 'table-insert') {
+                    const tableHtml = `
+                        <table class="pulse-table">
+                            <thead>
+                                <tr><th>Kop 1</th><th>Kop 2</th><th>Kop 3</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr><td><br></td><td><br></td><td><br></td></tr>
+                                <tr><td><br></td><td><br></td><td><br></td></tr>
+                            </tbody>
+                        </table>
+                        <p><br></p>
+                    `;
+                    document.execCommand('insertHTML', false, tableHtml);
+                    syncContent();
+                    return;
+                }
+
                 let cell = null;
                 if (savedRange) {
                     let node = savedRange.startContainer;
-                    if (node.nodeType === 3) node = node.parentNode;
+                    if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
                     cell = node.closest('td, th');
                 }
 
                 if (!cell) {
-                    showMessage('Melding', 'Zet uw cursor in een tabel om deze actie uit te voeren.');
+                    await Dialogs.showMessage('Tabel Actie', 'Plaats uw cursor in een tabelcel om deze actie uit te voeren.');
                     return;
                 }
 
@@ -808,405 +1057,620 @@ function initializePulseEditor(toolbarId, editorId, sourceId, geminiApiKey = '')
 
                 if (command === 'table-insert-row-above') {
                     const newRow = tbody.insertRow(rowIndex);
-                    Array.from(row.children).forEach(() => {
-                        const newCell = newRow.insertCell();
-                        newCell.innerHTML = '<br>';
-                    });
+                    Array.from(row.children).forEach(() => { newRow.insertCell().innerHTML = '<br>'; });
                 } else if (command === 'table-insert-row-below') {
                     const newRow = tbody.insertRow(rowIndex + 1);
-                    Array.from(row.children).forEach(() => {
-                        const newCell = newRow.insertCell();
-                        newCell.innerHTML = '<br>';
-                    });
+                    Array.from(row.children).forEach(() => { newRow.insertCell().innerHTML = '<br>'; });
                 } else if (command === 'table-insert-col-left') {
-                    Array.from(tbody.children).forEach(tr => {
-                        const newCell = tr.insertCell(cellIndex);
-                        newCell.innerHTML = '<br>';
-                    });
+                    Array.from(table.querySelectorAll('tr')).forEach(tr => { tr.insertCell(cellIndex).innerHTML = '<br>'; });
                 } else if (command === 'table-insert-col-right') {
-                    Array.from(tbody.children).forEach(tr => {
-                        const newCell = tr.insertCell(cellIndex + 1);
-                        newCell.innerHTML = '<br>';
-                    });
+                    Array.from(table.querySelectorAll('tr')).forEach(tr => { tr.insertCell(cellIndex + 1).innerHTML = '<br>'; });
                 } else if (command === 'table-delete-row') {
-                    tbody.deleteRow(rowIndex);
+                    row.remove();
                 } else if (command === 'table-delete-col') {
-                    Array.from(tbody.children).forEach(tr => {
-                        if (tr.children[cellIndex]) {
-                            tr.deleteCell(cellIndex);
-                        }
-                    });
+                    Array.from(table.querySelectorAll('tr')).forEach(tr => { if (tr.children[cellIndex]) tr.children[cellIndex].remove(); });
                 } else if (command === 'table-delete-table') {
                     table.remove();
                 }
+                syncContent();
+                return;
             }
-            updateToolbarState();
-            return;
-        }
 
-        // Focus herstellen voor native commando's
-        editor.focus();
-        if (savedRange) {
-            selection.removeAllRanges();
-            selection.addRange(savedRange);
-        }
-
-        // Native Acties
-        if (command === 'createLink') {
-            const url = await askInput('Link Maken', 'Voer URL in (bijv. https://google.com)', 'https://');
-            if (url && (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('mailto:'))) {
-                editor.focus();
-                if (savedRange) { selection.removeAllRanges(); selection.addRange(savedRange); }
-                document.execCommand(command, false, url);
-            }
-        } else if (command === 'insertImage') {
-            const url = await askInput('Afbeelding Invoegen', 'Voer afbeeldings-URL in', 'https://');
-            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                editor.focus();
-                if (savedRange) { selection.removeAllRanges(); selection.addRange(savedRange); }
-                document.execCommand(command, false, url);
-            }
-        } else {
-            document.execCommand(command, false, config.value || null);
-        }
-
-        updateToolbarState();
-    };
-
-    const toggleSourceView = (button) => {
-        if (!sourceView) return;
-        sourceMode = !sourceMode;
-        button.classList.toggle('active', sourceMode);
-        const buttons = toolbar.querySelectorAll('button');
-        buttons.forEach(btn => { if (btn !== button) btn.disabled = sourceMode; });
-
-        if (sourceMode) {
-            sourceView.value = editor.innerHTML;
-            editor.style.display = 'none';
-            sourceView.style.display = 'block';
-            sourceView.style.height = (editor.offsetHeight || 350) + 'px';
-        } else {
-            editor.innerHTML = sourceView.value;
-            sourceView.style.display = 'none';
-            editor.style.display = 'block';
-        }
-    };
-
-    const updateToolbarState = () => {
-        if (sourceMode) return;
-        commands.forEach(config => {
-            if (config.divider || config.type === 'action' || config.type === 'custom') return;
-            const selector = config.value ? `button[data-command="${config.command}"][data-value="${config.value}"]` : `button[data-command="${config.command}"]`;
-            const button = toolbar.querySelector(selector);
-            if (!button) return;
-
-            let isActive = false;
-            try {
-                if (config.type === 'state') isActive = document.queryCommandState(config.command);
-                else if (config.type === 'value') {
-                    const value = document.queryCommandValue(config.command);
-                    if (config.command === 'formatBlock' && value) isActive = (value.toLowerCase() === config.value.toLowerCase());
+            // LINK COMMAND
+            if (command === 'createLink') {
+                const url = await Dialogs.askInput('Link Invoegen', 'https://example.com', 'https://');
+                if (url && url !== 'https://') {
+                    restoreSelection();
+                    document.execCommand('createLink', false, url);
+                    syncContent();
                 }
-            } catch (err) {}
-
-            if (isActive) button.classList.add('active');
-            else button.classList.remove('active');
-        });
-    };
-
-    toolbar.innerHTML = '';
-    commands.forEach(cmd => toolbar.appendChild(createButton(cmd)));
-
-    if (sourceView && sourceView.value) editor.innerHTML = sourceView.value;
-    else if (!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
-
-    // Helper to get caret offset in raw text
-    const getCaretOffset = (element) => {
-        let caretOffset = 0;
-        const sel = window.getSelection();
-        if (sel.rangeCount > 0) {
-            const range = sel.getRangeAt(0);
-            const preCaretRange = range.cloneRange();
-            preCaretRange.selectNodeContents(element);
-            preCaretRange.setEnd(range.endContainer, range.endOffset);
-            caretOffset = preCaretRange.toString().length;
-        }
-        return caretOffset;
-    };
-
-    // Helper to set caret offset in raw text
-    const setCaretOffset = (element, offset) => {
-        const sel = window.getSelection();
-        const range = document.createRange();
-
-        let found = false;
-        let charCount = 0;
-
-        const treeWalker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, null, false);
-
-        while (treeWalker.nextNode()) {
-            const node = treeWalker.currentNode;
-            const nextCharCount = charCount + node.length;
-
-            if (!found && offset >= charCount && offset <= nextCharCount) {
-                range.setStart(node, offset - charCount);
-                range.collapse(true);
-                found = true;
-                break;
+                return;
             }
-            charCount = nextCharCount;
-        }
 
-        if (!found) {
-            // Fallback to the end if offset exceeds length
-            range.selectNodeContents(element);
-            range.collapse(false);
-        }
-
-        sel.removeAllRanges();
-        sel.addRange(range);
-    };
-
-    const updateGutter = () => {
-        if (!currentLang) return;
-
-        let gutterHtml = '';
-        const children = editor.children; // the .code-line elements
-        for (let i = 0; i < children.length; i++) {
-            const lineEl = children[i];
-            const text = lineEl.innerText;
-            const h = lineEl.offsetHeight || 26; // approx 1.6em fallback
-
-            // simple folding logic based on brackets/tags opening but not immediately closing
-            let foldIcon = '';
-            // A more forgiving check for block starters
-            if (text.match(/[{[]/) || text.match(/<[a-zA-Z0-9-]+[^>]*>$/)) {
-                // If it's already folded
-                if (lineEl.nextElementSibling && lineEl.nextElementSibling.classList.contains('folded')) {
-                    foldIcon = '<span class="fold-icon">▶</span>';
-                } else {
-                    foldIcon = '<span class="fold-icon">▼</span>';
+            // IMAGE COMMAND & RESIZER
+            if (command === 'insertImage') {
+                const url = await Dialogs.askInput('Afbeelding Invoegen', 'Voer afbeeldings-URL in (https://...)', 'https://');
+                if (url && url !== 'https://') {
+                    restoreSelection();
+                    const imgHtml = `<p><img src="${url}" alt="Afbeelding" style="max-width: 100%; border-radius: 6px;"></p>`;
+                    document.execCommand('insertHTML', false, imgHtml);
+                    syncContent();
+                    setupImageResizers();
                 }
+                return;
             }
 
-            gutterHtml += `<div class="gutter-line" data-line="${i}" style="height: ${h}px">${i + 1}${foldIcon}</div>`;
-        }
-        gutter.innerHTML = gutterHtml;
-    };
-
-    gutter.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Don't lose focus from editor
-        if (e.target.classList.contains('fold-icon')) {
-            const lineNum = parseInt(e.target.parentElement.dataset.line);
-            const lines = editor.children;
-            const startLine = lines[lineNum];
-            const text = startLine.innerText;
-
-            let isFolding = e.target.innerText === '▼';
-            e.target.innerText = isFolding ? '▶' : '▼';
-
-            // Very basic matching to find the end block
-            let depth = 1;
-            let endIdx = lineNum;
-            const openRegex = /[{[<]/g;
-            const closeRegex = /[}\]>]/g;
-
-            for (let i = lineNum + 1; i < lines.length; i++) {
-                const lText = lines[i].innerText;
-                const opens = (lText.match(openRegex) || []).length;
-                const closes = (lText.match(closeRegex) || []).length;
-                depth += opens - closes;
-                if (depth <= 0) {
-                    endIdx = i;
-                    break;
-                }
-            }
-
-            for (let i = lineNum + 1; i < endIdx && i < lines.length; i++) {
-                if (isFolding) {
-                    lines[i].classList.add('folded');
-                } else {
-                    lines[i].classList.remove('folded');
-                }
-            }
-        }
-    });
-
-    const updateCodeView = () => {
-        if (!currentLang) return;
-        const offset = getCaretOffset(editor);
-        const rawText = editor.innerText;
-
-        editor.innerHTML = tokenizeText(rawText, currentLang, searchQuery, useRegex);
-
-        setCaretOffset(editor, offset);
-        updateGutter();
-    };
-
-    window.addEventListener('resize', () => {
-        if (currentLang) updateGutter();
-    });
-
-    const syncContent = () => {
-        if (!sourceMode && sourceView) {
-            // For code mode, we want the raw text content to be saved, not the complex highlighted DOM
-            sourceView.value = currentLang ? editor.innerText : editor.innerHTML;
-        }
-        if (currentLang) updateCodeView();
-    };
-    editor.addEventListener('input', syncContent);
-
-    // Intercept Enter key in Code Mode to prevent standard p/div nesting issues
-    editor.addEventListener('keydown', (e) => {
-        if (currentLang && e.key === 'Enter') {
-            e.preventDefault();
-            document.execCommand('insertText', false, '\n');
-        }
-    });
-
-    document.addEventListener('selectionchange', () => {
-        if (window.getSelection().rangeCount > 0 && editor.contains(window.getSelection().getRangeAt(0).commonAncestorContainer)) updateToolbarState();
-    });
-    editor.addEventListener('click', updateToolbarState);
-    editor.addEventListener('keyup', updateToolbarState);
-    const form = editor.closest('form');
-    if (form) form.addEventListener('submit', syncContent);
-
-    // Bind Search Logic
-    const searchBtnToggle = document.getElementById('search-btn');
-    const searchInput = document.getElementById('pulse-search-input');
-    const regexCheck = document.getElementById('pulse-search-regex');
-    const prevBtn = document.getElementById('pulse-search-prev');
-    const nextBtn = document.getElementById('pulse-search-next');
-    const closeBtn = document.getElementById('pulse-search-close');
-    const replaceInput = document.getElementById('pulse-replace-input');
-    const replaceBtn = document.getElementById('pulse-replace-btn');
-    const replaceAllBtn = document.getElementById('pulse-replace-all-btn');
-    const searchCount = document.getElementById('pulse-search-count');
-
-    let currentMatchIndex = 0;
-
-    const updateSearchState = () => {
-        searchQuery = searchInput.value;
-        useRegex = regexCheck.checked;
-        if (currentLang) {
-            updateCodeView();
-        } else {
-            // In Rich Text Mode, doing a naive innerText replacement destroys HTML formatting.
-            // A full DOM walker is required for safe rich-text search highlighting, which is out of scope.
-            // For now, search in rich text mode will just visually scroll to matches using window.find if supported.
-            // Or we just don't highlight anything and return early to prevent data loss.
-            return;
-        }
-
-        const matches = editor.querySelectorAll('mark.search-match');
-        searchCount.innerText = matches.length > 0 ? `${currentMatchIndex + 1}/${matches.length}` : `0/0`;
-
-        matches.forEach(m => m.classList.remove('active'));
-        if (matches.length > 0) {
-            if (currentMatchIndex >= matches.length) currentMatchIndex = 0;
-            if (currentMatchIndex < 0) currentMatchIndex = matches.length - 1;
-            matches[currentMatchIndex].classList.add('active');
-            matches[currentMatchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            searchCount.innerText = `${currentMatchIndex + 1}/${matches.length}`;
-        }
-    };
-
-    if (searchBtnToggle) {
-        searchBtnToggle.addEventListener('click', (e) => {
-            e.preventDefault();
-            searchPanel.style.display = searchPanel.style.display === 'none' ? 'flex' : 'none';
-            if (searchPanel.style.display === 'flex') searchInput.focus();
-        });
-    }
-
-    searchInput.addEventListener('input', () => { currentMatchIndex = 0; updateSearchState(); });
-    regexCheck.addEventListener('change', () => { currentMatchIndex = 0; updateSearchState(); });
-
-    nextBtn.addEventListener('click', () => { currentMatchIndex++; updateSearchState(); });
-    prevBtn.addEventListener('click', () => { currentMatchIndex--; updateSearchState(); });
-    closeBtn.addEventListener('click', () => {
-        searchPanel.style.display = 'none';
-        searchQuery = '';
-        searchInput.value = '';
-        updateSearchState();
-    });
-
-    replaceBtn.addEventListener('click', () => {
-        if (!currentLang) return; // Prevent replace in rich text mode for safety
-        const matches = editor.querySelectorAll('mark.search-match');
-        if (matches.length > 0 && matches[currentMatchIndex]) {
-            matches[currentMatchIndex].innerText = replaceInput.value;
-            // update raw text underlying via code view refresh
-            const rawText = editor.innerText;
-            if (currentLang) {
-                editor.innerHTML = tokenizeText(rawText, currentLang, searchQuery, useRegex);
-            }
-            updateSearchState(); // re-eval
-        }
-    });
-
-    replaceAllBtn.addEventListener('click', () => {
-        if (!currentLang) return; // Prevent replace in rich text mode for safety
-        let rawText = editor.innerText;
-        if (!searchQuery) return;
-        try {
-            const flags = 'g';
-            let regex;
-            if (useRegex) {
-                regex = new RegExp(searchQuery, flags);
+            // STANDARD FORMATTING COMMANDS
+            restoreSelection();
+            if (config.value) {
+                document.execCommand(command, false, config.value);
             } else {
-                const escapedQuery = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                regex = new RegExp(escapedQuery, flags);
+                document.execCommand(command, false, null);
             }
-            rawText = rawText.replace(regex, replaceInput.value);
+            syncContent();
+            updateToolbarState();
+        };
+
+        // ---------------------------------------------------------
+        // SOURCE VIEW TOGGLE
+        // ---------------------------------------------------------
+        const toggleSourceView = () => {
+            if (!sourceView) return;
+            sourceMode = !sourceMode;
+            const btn = toolbar ? toolbar.querySelector('button[data-command="toggleSource"]') : null;
+            if (btn) btn.classList.toggle('active', sourceMode);
+
+            if (toolbar) {
+                toolbar.querySelectorAll('button').forEach(b => {
+                    if (b !== btn && b.dataset.command !== 'toggleFullscreen' && b.dataset.command !== 'toggleTheme') {
+                        b.disabled = sourceMode;
+                    }
+                });
+            }
+
+            if (sourceMode) {
+                sourceView.value = editor.innerHTML;
+                editor.style.display = 'none';
+                sourceView.style.display = 'block';
+                sourceView.style.height = `${editor.offsetHeight || 380}px`;
+                sourceView.focus();
+            } else {
+                editor.innerHTML = sourceView.value;
+                sourceView.style.display = 'none';
+                editor.style.display = 'block';
+                editor.focus();
+                syncContent();
+            }
+            triggerEvent('modeChange', { mode: sourceMode ? 'source' : (currentLang || 'rich-text') });
+        };
+
+        // ---------------------------------------------------------
+        // TOOLBAR & FLOATING SELECTION STATE
+        // ---------------------------------------------------------
+        const updateToolbarState = () => {
+            if (sourceMode || isDestroyed) return;
+
+            commands.forEach(config => {
+                if (config.divider || config.type === 'action' || config.type === 'custom') return;
+                const selector = config.value ? `button[data-command="${config.command}"][data-value="${config.value}"]` : `button[data-command="${config.command}"]`;
+                const btn = toolbar ? toolbar.querySelector(selector) : null;
+                if (!btn) return;
+
+                let isActive = false;
+                try {
+                    if (config.type === 'state') isActive = document.queryCommandState(config.command);
+                    else if (config.type === 'value') {
+                        const val = document.queryCommandValue(config.command);
+                        if (config.command === 'formatBlock' && val) {
+                            isActive = (val.toLowerCase() === config.value.toLowerCase());
+                        }
+                    }
+                } catch (e) {}
+
+                btn.classList.toggle('active', isActive);
+            });
+
+            // Update Floating Bubble Toolbar
+            if (floatingToolbar) {
+                const sel = window.getSelection();
+                if (!sel.isCollapsed && editor.contains(sel.anchorNode)) {
+                    const range = sel.getRangeAt(0);
+                    const rect = range.getBoundingClientRect();
+                    const containerRect = container.getBoundingClientRect();
+
+                    floatingToolbar.style.top = `${rect.top - containerRect.top - 46}px`;
+                    floatingToolbar.style.left = `${rect.left - containerRect.left + (rect.width / 2) - (floatingToolbar.offsetWidth / 2)}px`;
+                    floatingToolbar.classList.add('show');
+                } else {
+                    floatingToolbar.classList.remove('show');
+                }
+            }
+        };
+
+        // ---------------------------------------------------------
+        // STATS BAR UPDATE
+        // ---------------------------------------------------------
+        const updateStats = () => {
+            if (!statusBar) return;
+            const text = editor.innerText.trim();
+            const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+            const chars = text.length;
+            const readingMin = Math.ceil(words / 200);
+
+            const wEl = statusBar.querySelector('.pulse-stat-words');
+            const cEl = statusBar.querySelector('.pulse-stat-chars');
+            const rEl = statusBar.querySelector('.pulse-stat-reading');
+            const bEl = statusBar.querySelector('.pulse-mode-badge');
+
+            if (wEl) wEl.innerText = `${words} ${words === 1 ? 'woord' : 'woorden'}`;
+            if (cEl) cEl.innerText = `${chars} ${chars === 1 ? 'teken' : 'tekens'}`;
+            if (rEl) rEl.innerText = `${readingMin} min leestijd`;
+            if (bEl) bEl.innerText = currentLang ? currentLang.toUpperCase() : 'Rich Text';
+        };
+
+        // ---------------------------------------------------------
+        // IMAGE RESIZING & CONTROLS
+        // ---------------------------------------------------------
+        const setupImageResizers = () => {
+            editor.querySelectorAll('img').forEach(img => {
+                if (img.dataset.pulseImageReady) return;
+                img.dataset.pulseImageReady = 'true';
+
+                img.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectImage(img);
+                });
+            });
+        };
+
+        const selectImage = (img) => {
+            document.querySelectorAll('.pulse-image-selected').forEach(el => el.classList.remove('pulse-image-selected'));
+            document.querySelectorAll('.pulse-image-toolbar').forEach(el => el.remove());
+
+            img.classList.add('pulse-image-selected');
+
+            const imgToolbar = document.createElement('div');
+            imgToolbar.className = 'pulse-image-toolbar';
+            imgToolbar.innerHTML = `
+                <button type="button" class="btn" data-size="25%">25%</button>
+                <button type="button" class="btn" data-size="50%">50%</button>
+                <button type="button" class="btn" data-size="100%">100%</button>
+                <span class="toolbar-divider"></span>
+                <button type="button" class="btn" data-align="left">Links</button>
+                <button type="button" class="btn" data-align="center">Midden</button>
+                <button type="button" class="btn" data-align="right">Rechts</button>
+                <span class="toolbar-divider"></span>
+                <button type="button" class="btn" data-action="delete" style="color: var(--pulse-danger);">Verwijder</button>
+            `;
+
+            img.parentElement.style.position = 'relative';
+            img.parentElement.appendChild(imgToolbar);
+
+            imgToolbar.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const btn = e.target.closest('button');
+                if (!btn) return;
+
+                if (btn.dataset.size) {
+                    img.style.width = btn.dataset.size;
+                } else if (btn.dataset.align) {
+                    const align = btn.dataset.align;
+                    if (align === 'center') {
+                        img.style.display = 'block';
+                        img.style.margin = '1rem auto';
+                        img.style.float = 'none';
+                    } else if (align === 'left') {
+                        img.style.display = 'inline';
+                        img.style.float = 'left';
+                        img.style.margin = '0 1rem 1rem 0';
+                    } else if (align === 'right') {
+                        img.style.display = 'inline';
+                        img.style.float = 'right';
+                        img.style.margin = '0 0 1rem 1rem';
+                    }
+                } else if (btn.dataset.action === 'delete') {
+                    img.remove();
+                    imgToolbar.remove();
+                }
+                syncContent();
+            });
+
+            document.addEventListener('click', function onDocClick() {
+                img.classList.remove('pulse-image-selected');
+                imgToolbar.remove();
+                document.removeEventListener('click', onDocClick);
+            });
+        };
+
+        // ---------------------------------------------------------
+        // SEARCH & REPLACE (Rich Text & Code Mode)
+        // ---------------------------------------------------------
+        const searchInput = searchPanel.querySelector('.pulse-search-input');
+        const replaceInput = searchPanel.querySelector('.pulse-replace-input');
+        const regexCheck = searchPanel.querySelector('.pulse-search-regex');
+        const countSpan = searchPanel.querySelector('.pulse-search-count');
+
+        const updateSearch = () => {
+            searchQuery = searchInput.value;
+            useRegex = regexCheck.checked;
 
             if (currentLang) {
-                editor.innerHTML = tokenizeText(rawText, currentLang, searchQuery, useRegex);
-            }
-            updateSearchState();
-        } catch(e) {}
-    });
-
-    document.addEventListener('keydown', (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
-            e.preventDefault();
-            searchPanel.style.display = 'flex';
-            searchInput.focus();
-            // Optional: load current selection into search box
-            const sel = window.getSelection().toString();
-            if (sel) {
-                searchInput.value = sel;
-                searchQuery = sel;
-                currentMatchIndex = 0;
-                updateSearchState();
-            }
-        }
-    });
-
-    // Bind Language Selection (if element exists)
-    const langSelect = document.getElementById('lang-select');
-    if (langSelect) {
-        langSelect.addEventListener('change', (e) => {
-            currentLang = e.target.value;
-            if (currentLang) {
-                editor.classList.add('code-mode-active');
-                gutter.style.display = 'block';
-                toolbar.style.display = 'none'; // Hide rich text tools in code mode
                 updateCodeView();
             } else {
-                editor.classList.remove('code-mode-active');
-                gutter.style.display = 'none';
-                toolbar.style.display = '';
-                // basic reset to rich text
-                editor.innerHTML = '<p>' + editor.innerText.replace(/\n/g, '<br>') + '</p>';
+                highlightRichTextSearch();
+            }
+
+            const matches = editor.querySelectorAll('mark.search-match');
+            countSpan.innerText = matches.length > 0 ? `${currentMatchIndex + 1}/${matches.length}` : '0/0';
+
+            matches.forEach(m => m.classList.remove('active'));
+            if (matches.length > 0) {
+                if (currentMatchIndex >= matches.length) currentMatchIndex = 0;
+                if (currentMatchIndex < 0) currentMatchIndex = matches.length - 1;
+                matches[currentMatchIndex].classList.add('active');
+                matches[currentMatchIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                countSpan.innerText = `${currentMatchIndex + 1}/${matches.length}`;
+            }
+        };
+
+        const highlightRichTextSearch = () => {
+            // Remove previous search markers
+            editor.querySelectorAll('mark.search-match').forEach(mark => {
+                const parent = mark.parentNode;
+                while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+                mark.remove();
+            });
+
+            if (!searchQuery) return;
+
+            try {
+                const flags = 'gi';
+                const regex = useRegex ? new RegExp(searchQuery, flags) : new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+                const treeWalker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, null, false);
+                const textNodes = [];
+
+                while (treeWalker.nextNode()) {
+                    textNodes.push(treeWalker.currentNode);
+                }
+
+                textNodes.forEach(node => {
+                    const text = node.nodeValue;
+                    if (regex.test(text)) {
+                        regex.lastIndex = 0;
+                        const fragment = document.createDocumentFragment();
+                        let lastIdx = 0;
+                        let match;
+
+                        while ((match = regex.exec(text)) !== null) {
+                            if (match.index > lastIdx) {
+                                fragment.appendChild(document.createTextNode(text.substring(lastIdx, match.index)));
+                            }
+                            const mark = document.createElement('mark');
+                            mark.className = 'search-match';
+                            mark.innerText = match[0];
+                            fragment.appendChild(mark);
+                            lastIdx = regex.lastIndex;
+                        }
+
+                        if (lastIdx < text.length) {
+                            fragment.appendChild(document.createTextNode(text.substring(lastIdx)));
+                        }
+
+                        node.parentNode.replaceChild(fragment, node);
+                    }
+                });
+            } catch (e) {}
+        };
+
+        searchPanel.querySelector('.pulse-search-prev').addEventListener('click', () => { currentMatchIndex--; updateSearch(); });
+        searchPanel.querySelector('.pulse-search-next').addEventListener('click', () => { currentMatchIndex++; updateSearch(); });
+        searchPanel.querySelector('.pulse-search-close').addEventListener('click', () => {
+            searchPanel.style.display = 'none';
+            searchQuery = '';
+            searchInput.value = '';
+            updateSearch();
+        });
+
+        searchInput.addEventListener('input', () => { currentMatchIndex = 0; updateSearch(); });
+        regexCheck.addEventListener('change', () => { currentMatchIndex = 0; updateSearch(); });
+
+        searchPanel.querySelector('.pulse-replace-btn').addEventListener('click', () => {
+            const matches = editor.querySelectorAll('mark.search-match');
+            if (matches.length > 0 && matches[currentMatchIndex]) {
+                const repVal = replaceInput.value;
+                const matchEl = matches[currentMatchIndex];
+                matchEl.parentNode.replaceChild(document.createTextNode(repVal), matchEl);
+                syncContent();
+                updateSearch();
             }
         });
-    }
-}
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { initializePulseEditor };
-} else if (typeof window !== 'undefined') {
-    window.initializePulseEditor = initializePulseEditor;
-}
+        searchPanel.querySelector('.pulse-replace-all-btn').addEventListener('click', () => {
+            const repVal = replaceInput.value;
+            if (currentLang) {
+                let raw = editor.innerText;
+                const regex = useRegex ? new RegExp(searchQuery, 'g') : new RegExp(searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+                raw = raw.replace(regex, repVal);
+                editor.innerHTML = tokenizeText(raw, currentLang, '', false);
+            } else {
+                const matches = editor.querySelectorAll('mark.search-match');
+                matches.forEach(m => m.parentNode.replaceChild(document.createTextNode(repVal), m));
+            }
+            syncContent();
+            updateSearch();
+        });
+
+        // ---------------------------------------------------------
+        // CODE MODE & GUTTER
+        // ---------------------------------------------------------
+        const updateGutter = () => {
+            if (!currentLang) return;
+            let gutterHtml = '';
+            const lines = editor.children;
+            for (let i = 0; i < lines.length; i++) {
+                const lineEl = lines[i];
+                const text = lineEl.innerText;
+                const h = lineEl.offsetHeight || 26;
+                let foldIcon = '';
+
+                if (text.match(/[{[]/) || text.match(/<[a-zA-Z0-9-]+[^>]*>$/)) {
+                    foldIcon = (lineEl.nextElementSibling && lineEl.nextElementSibling.classList.contains('folded')) ? '<span class="fold-icon">▶</span>' : '<span class="fold-icon">▼</span>';
+                }
+                gutterHtml += `<div class="gutter-line" data-line="${i}" style="height: ${h}px">${i + 1}${foldIcon}</div>`;
+            }
+            gutter.innerHTML = gutterHtml;
+        };
+
+        gutter.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            if (e.target.classList.contains('fold-icon')) {
+                const lineNum = parseInt(e.target.parentElement.dataset.line);
+                const lines = editor.children;
+                const isFolding = e.target.innerText === '▼';
+                e.target.innerText = isFolding ? '▶' : '▼';
+
+                let depth = 1;
+                let endIdx = lineNum;
+                for (let i = lineNum + 1; i < lines.length; i++) {
+                    const lText = lines[i].innerText;
+                    const opens = (lText.match(/[{[<]/g) || []).length;
+                    const closes = (lText.match(/[}\]>]/g) || []).length;
+                    depth += opens - closes;
+                    if (depth <= 0) { endIdx = i; break; }
+                }
+
+                for (let i = lineNum + 1; i < endIdx && i < lines.length; i++) {
+                    lines[i].classList.toggle('folded', isFolding);
+                }
+            }
+        });
+
+        const updateCodeView = () => {
+            if (!currentLang) return;
+            const rawText = editor.innerText;
+            editor.innerHTML = tokenizeText(rawText, currentLang, searchQuery, useRegex);
+            updateGutter();
+        };
+
+        // ---------------------------------------------------------
+        // SYNC & EVENT EMISSION
+        // ---------------------------------------------------------
+        const syncContent = () => {
+            if (sourceView && !sourceMode) {
+                sourceView.value = currentLang ? editor.innerText : editor.innerHTML;
+            }
+            updateStats();
+            triggerEvent('change', { html: editor.innerHTML, text: editor.innerText });
+        };
+
+        // ---------------------------------------------------------
+        // KEYBOARD SHORTCUTS & EVENT LISTENERS
+        // ---------------------------------------------------------
+        editor.addEventListener('input', () => {
+            if (currentLang) updateGutter();
+            syncContent();
+        });
+
+        editor.addEventListener('keydown', (e) => {
+            const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+
+            // Code Mode Tab Key
+            if (currentLang && e.key === 'Tab') {
+                e.preventDefault();
+                document.execCommand('insertText', false, '    ');
+                return;
+            }
+
+            // Code Mode Enter Key
+            if (currentLang && e.key === 'Enter') {
+                e.preventDefault();
+                document.execCommand('insertText', false, '\n');
+                return;
+            }
+
+            // Shortcuts
+            if (isCtrlOrMeta) {
+                const k = e.key.toLowerCase();
+                if (k === 'b') { e.preventDefault(); handleCommand('bold'); }
+                else if (k === 'i') { e.preventDefault(); handleCommand('italic'); }
+                else if (k === 'u') { e.preventDefault(); handleCommand('underline'); }
+                else if (k === 'k') { e.preventDefault(); handleCommand('createLink'); }
+                else if (k === 'f') { e.preventDefault(); handleCommand('toggleSearch'); }
+                else if (k === 'h') { e.preventDefault(); handleCommand('toggleSearch'); }
+                else if (k === '/') { e.preventDefault(); handleCommand('showShortcuts'); }
+            }
+        });
+
+        document.addEventListener('selectionchange', () => {
+            if (window.getSelection().rangeCount > 0 && editor.contains(window.getSelection().getRangeAt(0).commonAncestorContainer)) {
+                updateToolbarState();
+            }
+        });
+
+        editor.addEventListener('click', updateToolbarState);
+        editor.addEventListener('keyup', updateToolbarState);
+
+        const parentForm = editor.closest('form');
+        if (parentForm) parentForm.addEventListener('submit', syncContent);
+
+        // Initial setup
+        if (sourceView && sourceView.value) {
+            editor.innerHTML = sourceView.value;
+        } else if (!editor.innerHTML.trim()) {
+            editor.innerHTML = '<p><br></p>';
+        }
+
+        setupImageResizers();
+        updateStats();
+
+        // ---------------------------------------------------------
+        // EVENT EMITTER HELPERS
+        // ---------------------------------------------------------
+        function triggerEvent(eventName, data) {
+            if (options[`on${eventName.charAt(0).toUpperCase() + eventName.slice(1)}`]) {
+                try { options[`on${eventName.charAt(0).toUpperCase() + eventName.slice(1)}`](data); } catch (e) {}
+            }
+            if (eventListeners.has(eventName)) {
+                eventListeners.get(eventName).forEach(cb => {
+                    try { cb(data); } catch (e) {}
+                });
+            }
+        }
+
+        // Helper to load external CDN script once
+        function loadExternalScript(src) {
+            return new Promise((resolve, reject) => {
+                if (document.querySelector(`script[src="${src}"]`)) return resolve();
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        // ---------------------------------------------------------
+        // PUBLIC API CONTROLLER OBJECT
+        // ---------------------------------------------------------
+        const controller = {
+            id: instanceId,
+            editor,
+            toolbar,
+            sourceView,
+            container,
+
+            getContent() {
+                return currentLang ? editor.innerText : editor.innerHTML;
+            },
+
+            setContent(content) {
+                if (currentLang) {
+                    editor.innerText = content;
+                    updateCodeView();
+                } else {
+                    editor.innerHTML = content || '<p><br></p>';
+                }
+                setupImageResizers();
+                syncContent();
+            },
+
+            getMarkdown() {
+                if (typeof TurndownService !== 'undefined') {
+                    const td = new TurndownService({ headingStyle: 'atx' });
+                    return td.turndown(editor.innerHTML);
+                }
+                return editor.innerText;
+            },
+
+            async setMarkdown(md) {
+                if (typeof marked === 'undefined') {
+                    await loadExternalScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js');
+                }
+                const html = (typeof marked !== 'undefined' && marked.parse) ? marked.parse(md) : md.replace(/\n/g, '<br>');
+                this.setContent(html);
+            },
+
+            getText() {
+                return editor.innerText;
+            },
+
+            getStats() {
+                const text = editor.innerText.trim();
+                const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+                return {
+                    words,
+                    characters: text.length,
+                    readingTimeMinutes: Math.ceil(words / 200)
+                };
+            },
+
+            setTheme(newTheme) {
+                if (newTheme === 'dark') container.classList.add('pulse-theme-dark');
+                else container.classList.remove('pulse-theme-dark');
+                triggerEvent('themeChange', { isDark: container.classList.contains('pulse-theme-dark') });
+            },
+
+            setLanguage(lang) {
+                currentLang = lang;
+                if (currentLang) {
+                    editor.classList.add('code-mode-active');
+                    gutter.style.display = 'block';
+                    if (toolbar) toolbar.style.display = 'none';
+                    updateCodeView();
+                } else {
+                    editor.classList.remove('code-mode-active');
+                    gutter.style.display = 'none';
+                    if (toolbar) toolbar.style.display = '';
+                    editor.innerHTML = '<p>' + editor.innerText.replace(/\n/g, '<br>') + '</p>';
+                }
+                syncContent();
+                triggerEvent('modeChange', { mode: currentLang || 'rich-text' });
+            },
+
+            focus() {
+                editor.focus();
+            },
+
+            blur() {
+                editor.blur();
+            },
+
+            execCommand(cmd, val = null) {
+                handleCommand(cmd, { command: cmd, value: val });
+            },
+
+            on(event, callback) {
+                if (!eventListeners.has(event)) eventListeners.set(event, []);
+                eventListeners.get(event).push(callback);
+            },
+
+            off(event, callback) {
+                if (eventListeners.has(event)) {
+                    eventListeners.set(event, eventListeners.get(event).filter(cb => cb !== callback));
+                }
+            },
+
+            destroy() {
+                isDestroyed = true;
+                gutter.remove();
+                searchPanel.remove();
+                if (floatingToolbar) floatingToolbar.remove();
+                if (statusBar) statusBar.remove();
+                if (parentForm) parentForm.removeEventListener('submit', syncContent);
+            }
+        };
+
+        triggerEvent('init', { controller });
+        return controller;
+    }
+
+    return {
+        initializePulseEditor,
+        PulseEditor: {
+            init: initializePulseEditor,
+            callGeminiAPI,
+            Dialogs,
+            ICONS
+        }
+    };
+}));
